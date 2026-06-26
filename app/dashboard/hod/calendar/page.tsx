@@ -108,7 +108,7 @@ export default function HodCalendarPage() {
       const el = calendarRef.current;
       if (!el) return;
 
-      import('@fullcalendar/react').then(({ default: Calendar }) => {
+      import('@fullcalendar/core').then(({ Calendar }) => {
         import('@fullcalendar/daygrid').then(() => {
           import('@fullcalendar/interaction').then(() => {
             if (!calendarRef.current) return;
@@ -154,7 +154,7 @@ export default function HodCalendarPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: EVENT_COLORS.approved.bg }} />
-          <span className="text-[13px] text-[var(--var(--text-secondary))]">
+          <span className="text-[13px] text-[var(--text-secondary)]">
             Approved ({legend.approved})
           </span>
         </div>

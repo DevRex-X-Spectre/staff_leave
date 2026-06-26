@@ -20,16 +20,16 @@ export function DashboardLayout({
 }) {
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-page)]">
-      {/* Sidebar */}
-      <div className="hidden md:flex">
-        <Sidebar role={role} />
-      </div>
+      {/* Sidebar handles its own responsive visibility */}
+      <Sidebar role={role} />
 
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar user={user} />
-        <main className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="max-w-[1200px] mx-auto">{children}</div>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 animate-fade-in">
+          <div className="max-w-[1200px] mx-auto pl-12 lg:pl-0">
+            {children}
+          </div>
         </main>
       </div>
     </div>

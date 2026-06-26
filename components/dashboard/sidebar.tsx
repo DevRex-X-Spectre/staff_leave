@@ -18,6 +18,8 @@ import {
   CalendarRange,
   ChevronRight,
   ChevronDown,
+  X,
+  Menu,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -140,27 +142,20 @@ function navForRole(role: UserRole): NavGroup[] {
 
 function isActive(href: string, pathname: string): boolean {
   if (href === pathname) return true;
-  // Sub-pages
-  if (href !== '/dashboard/' + roleFromPath(pathname) && href !== pathname) {
-    return pathname.startsWith(href);
-  }
+  if (pathname.startsWith(href + '/')) return true;
   return false;
-}
-
-function roleFromPath(pathname: string): string {
-  const parts = pathname.split('/');
-  return parts[2] ?? 'staff';
 }
 
 function SidebarGroup({
   group,
   items,
   pathname,
+  onNavigate,
 }: {
   group: NavGroup;
-  pathname: string;
-  pathname: string;
   items: NavItem[];
+  pathname: string;
+  onNavigate?: () => void;
 }) {
   const [open, setOpen] = useState(true);
   return (
@@ -169,7 +164,7 @@ function SidebarGroup({
         onClick={() => setOpen(!open)}
         className="flex items-center justify-between w-full px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
       >
-        {group}
+        {group.group}
         <ChevronDown
           size={12}
           className={cn('transition-transform', !open && '-rotate-90')}
@@ -182,6 +177,7 @@ function SidebarGroup({
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 'flex items-center gap-2.5 px-3 py-2 rounded-[var(--radius-md)] text-[14px] font-light transition-colors',
                 'tracking-tight',
@@ -200,12 +196,19 @@ function SidebarGroup({
   );
 }
 
-export function Sidebar({ role }: { role: UserRole }) {
-  const pathname = usePathname();
+function SidebarContent({
+  role,
+  pathname,
+  onNavigate,
+}: {
+  role: UserRole;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
   const nav = navForRole(role);
 
   return (
-    <aside className="w-56 shrink-0 flex flex-col h-full">
+    <div className="flex flex-col h-full">
       {/* Brand */}
       <div className="px-4 py-5 border-b border-[var(--border-subtle)]">
         <div className="flex items-center gap-2">
@@ -229,8 +232,9 @@ export function Sidebar({ role }: { role: UserRole }) {
           <SidebarGroup
             key={group.group}
             group={group}
-            pathname={pathname}
             items={group.items}
+            pathname={pathname}
+            onNavigate={onNavigate}
           />
         ))}
       </nav>
@@ -243,6 +247,56 @@ export function Sidebar({ role }: { role: UserRole }) {
           Staff Leave Management System
         </p>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+export function Sidebar({ role }: { role: UserRole }) {
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile hamburger trigger */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-3 left-3 z-40 h-9 w-9 inline-flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+        aria-label="Open navigation menu"
+      >
+        <Menu size={16} strokeWidth={1.5} />
+      </button>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] animate-fade-in"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-[var(--bg-card)] shadow-[var(--shadow-md)] animate-fade-in">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="absolute top-3 right-3 h-8 w-8 inline-flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
+              aria-label="Close navigation menu"
+            >
+              <X size={16} strokeWidth={1.5} />
+            </button>
+            <SidebarContent
+              role={role}
+              pathname={pathname}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          </aside>
+        </>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-56 shrink-0 flex-col h-full bg-[var(--bg-card)] border-r border-[var(--border-subtle)]">
+        <SidebarContent role={role} pathname={pathname} />
+      </aside>
+    </>
   );
 }

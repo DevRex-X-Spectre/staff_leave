@@ -1,57 +1,57 @@
-'use client';
+import { requireUser } from '@/lib/auth';
+import { listRotaSlotsByDepartment } from '@/lib/data/dal';
+import { StaffRotaClient } from './staff-rota-client';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { isDemoMode } from '@/lib/utils';
+import { Users } from '@/lib/mock/store';
+import type { RotaSlot } from '@/types';
 
-import { useEffect, useRef } from 'react';
-import { PageHeader } from '@/components/ui/stat-card';
-import { Card, CardTitle, CardDescription } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/stat-card';
+type RotaRow = {
+  slot_start: string;
+  slot_end: string;
+  leave_type_id: string | null;
+};
 
-export default function StaffRotaPage() {
-  const calendarRef = useRef<HTMLDivElement>(null);
+export default async function StaffRotaPage() {
+  const user = await requireUser();
 
-  useEffect(() => {
-    // Lazy-load FullCalendar client-side
-    import('@fullcalendar/react').then(({ default: Calendar }) => {
-      import('@fullcalendar/daygrid').then(() => {
-        if (!calendarRef.current) return;
-        new Calendar(calendarRef.current, {
-          plugins: [],
-          initialView: 'dayGridMonth',
-          headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth',
-          },
-          height: 'auto',
-          events: [
-            // Sample event — in real app, resolve from RotaSlotsByDepartment
-            { title: 'Engr. Adekunle — Annual', start: '2026-07-15', end: '2026-07-19', color: '#101010' },
-            { title: 'Ms. Yusuf — Annual', start: '2026-08-04', end: '2026-08-08', color: '#6b7280' },
-          ],
-          eventDisplay: 'block',
-        }).render();
-      });
-    });
-  }, []);
+  // Resolve department. If a staff user has no department we show an empty state.
+  const departmentId = user.department_id;
+
+  let slots: RotaRow[] = [];
+  if (departmentId) {
+    const data = (await listRotaSlotsByDepartment(departmentId)) as RotaSlot[];
+    slots = data.map((s) => ({
+      slot_start: s.slot_start,
+      slot_end: s.slot_end,
+      leave_type_id: s.leave_type_id,
+    }));
+  }
+
+  // Resolve department member count (for "X of Y on leave" stat).
+  let departmentSize = 0;
+  if (departmentId) {
+    if (isDemoMode()) {
+      departmentSize = Users.all()
+        .filter((u) => u.department_id === departmentId && u.is_active && u.is_approved)
+        .length;
+    } else {
+      const sb = await getSupabaseServerClient();
+      const { count } = await sb
+        .from('users')
+        .select('id', { count: 'exact', head: true })
+        .eq('department_id', departmentId)
+        .eq('is_active', true)
+        .eq('is_approved', true);
+      departmentSize = count ?? 0;
+    }
+  }
 
   return (
-    <div className="animate-fade-in">
-      <PageHeader
-        title="Leave Rota"
-        description="Published departmental leave schedule. Dates with staff on leave are shown below."
-      />
-
-      <Card padding={false}>
-        <div className="p-6 border-b border-[var(--border-subtle)]">
-          <CardTitle>Departmental Rota</CardTitle>
-          <CardDescription className="mt-1">
-            Only the number of staff on leave is shown per day — individual names are
-            hidden to protect privacy.
-          </CardDescription>
-        </div>
-        <div className="p-6">
-          <div ref={calendarRef} className="fc" />
-        </div>
-      </Card>
-    </div>
+    <StaffRotaClient
+      slots={slots}
+      departmentSize={departmentSize}
+      departmentId={departmentId}
+    />
   );
 }
