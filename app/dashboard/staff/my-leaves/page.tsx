@@ -1,9 +1,10 @@
-import { requireUser } from '@/lib/auth';
-import { listApplicationsByUser } from '@/lib/data/dal';
+'use client';
+
+import { useAuth } from '@/components/providers/auth-provider';
 import { MyLeavesClient } from './my-leaves-client';
 
-export default async function MyLeavesPage() {
-  const user = await requireUser();
-  const applications = await listApplicationsByUser(user.id);
-  return <MyLeavesClient initialApplications={applications as Parameters<typeof MyLeavesClient>[0]['initialApplications']} />;
+export default function MyLeavesPage() {
+  const { currentUser, ready } = useAuth();
+  if (!ready || !currentUser) return null;
+  return <MyLeavesClient userId={currentUser.id} />;
 }

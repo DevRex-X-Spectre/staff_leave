@@ -10,33 +10,21 @@ import { ConfirmDialog } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/stat-card';
 import { formatDate } from '@/lib/utils';
 import { LeaveTracker } from '@/components/leave/leave-tracker';
-import { cancelApplicationAction } from '@/lib/data/actions';
-import { Calendar, X } from 'lucide-react';
-import type { LeaveApplicationWithRelations } from '@/types';
+import { useApplications } from '@/lib/local/data-hooks';
+import { Applications as ApplicationsStore } from '@/lib/local/store';
+import { Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function MyLeavesClient({
-  initialApplications,
-}: {
-  initialApplications: LeaveApplicationWithRelations[];
-}) {
-  const [applications, setApplications] =
-    useState<LeaveApplicationWithRelations[]>(initialApplications);
-  const [selected, setSelected] = useState<LeaveApplicationWithRelations | null>(null);
+export function MyLeavesClient({ userId }: { userId: string }) {
+  const applications = useApplications({ applicantId: userId });
+  const [selected, setSelected] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState<string | null>(null);
 
-  const handleCancel = async (id: string) => {
+  const handleCancel = (id: string) => {
     setCancelling(id);
     try {
-      const fd = new FormData();
-      fd.append('application_id', id);
-      await cancelApplicationAction(fd);
-      setApplications((prev) =>
-        prev.map((a) =>
-          a.id === id ? { ...a, status: 'cancelled' as const } : a
-        )
-      );
+      ApplicationsStore.update(id, { status: 'cancelled' });
       toast.success('Application cancelled.');
     } catch (e) {
       toast.error(String(e));
@@ -45,6 +33,8 @@ export function MyLeavesClient({
       setShowCancel(null);
     }
   };
+
+  const selectedApp = applications.find((a) => a.id === selected) ?? null;
 
   return (
     <div className="animate-fade-in">
@@ -63,14 +53,14 @@ export function MyLeavesClient({
             description="Apply for leave to see your history here."
           />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-4 sm:-mx-6 lg:mx-0">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[var(--border-subtle)]">
                   {['Leave type', 'Dates', 'Days', 'Status', 'Submitted', 'Actions'].map((h) => (
                     <th
                       key={h}
-                      className="text-left py-2.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] pb-3"
+                      className="text-left py-2.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] pb-2.5"
                     >
                       {h}
                     </th>
@@ -82,24 +72,24 @@ export function MyLeavesClient({
                   <tr
                     key={app.id}
                     className="hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
-                    onClick={() => setSelected(app)}
+                    onClick={() => setSelected(app.id)}
                   >
-                    <td className="py-3 text-[13px] text-[var(--text-primary)]">
+                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-primary)]">
                       {app.leave_type?.name ?? '—'}
                     </td>
-                    <td className="py-3 text-[13px] text-[var(--text-secondary)]">
+                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
                       {formatDate(app.start_date)} – {formatDate(app.end_date)}
                     </td>
-                    <td className="py-3 text-[13px] text-[var(--text-secondary)]">
+                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}
                     </td>
-                    <td className="py-3">
+                    <td className="py-3 px-3 sm:px-4">
                       <StatusBadge status={app.status} />
                     </td>
-                    <td className="py-3 text-[12px] text-[var(--text-tertiary)]">
+                    <td className="py-3 px-3 sm:px-4 text-[12px] text-[var(--text-tertiary)]">
                       {formatDate(app.created_at)}
                     </td>
-                    <td className="py-3">
+                    <td className="py-3 px-3 sm:px-4">
                       {(app.status === 'pending' || app.status === 'hod_approved') && (
                         <Button
                           variant="outline-danger"
@@ -122,9 +112,9 @@ export function MyLeavesClient({
       </Card>
 
       {/* Detail drawer */}
-      {selected && (
+      {selectedApp && (
         <Dialog
-          open={!!selected}
+          open={!!selectedApp}
           onClose={() => setSelected(null)}
           title="Leave application details"
           className="max-w-lg"
@@ -134,17 +124,17 @@ export function MyLeavesClient({
               <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
                 Progress
               </p>
-              <LeaveTracker status={selected.status} />
+              <LeaveTracker status={selectedApp.status} />
             </div>
 
             <div className="space-y-2.5">
               {[
-                ['Leave type', selected.leave_type?.name ?? '—'],
-                ['Department', selected.department?.name ?? '—'],
-                ['Start date', formatDate(selected.start_date)],
-                ['End date', formatDate(selected.end_date)],
-                ['Total days', String(selected.total_days)],
-                ['Submitted', formatDate(selected.created_at)],
+                ['Leave type', selectedApp.leave_type?.name ?? '—'],
+                ['Department', selectedApp.department?.name ?? '—'],
+                ['Start date', formatDate(selectedApp.start_date)],
+                ['End date', formatDate(selectedApp.end_date)],
+                ['Total days', String(selectedApp.total_days)],
+                ['Submitted', formatDate(selectedApp.created_at)],
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -161,11 +151,11 @@ export function MyLeavesClient({
                 Reason
               </p>
               <p className="text-[14px] text-[var(--text-primary)] leading-relaxed">
-                {selected.reason}
+                {selectedApp.reason}
               </p>
             </div>
 
-            {selected.rota_conflict && (
+            {selectedApp.rota_conflict && (
               <div className="p-3 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)]">
                 <p className="text-[12px] text-[var(--warning)]">
                   ⚠️ This application conflicts with the published departmental leave rota.
@@ -175,7 +165,7 @@ export function MyLeavesClient({
 
             <div className="flex items-center justify-between pt-2">
               <span className="text-[13px] text-[var(--text-secondary)]">Current status</span>
-              <StatusBadge status={selected.status} />
+              <StatusBadge status={selectedApp.status} />
             </div>
           </div>
         </Dialog>

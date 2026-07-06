@@ -2,20 +2,25 @@ import { cn } from '@/lib/utils';
 
 /* -------------------------------------------------------------------------
    Card — 12px radius, white background, subtle shadow. No border.
+   Optional hoverable variant lifts to the Cal.com hover shadow.
    ------------------------------------------------------------------------- */
 export function Card({
   children,
   className,
   padding = true,
+  hoverable = false,
 }: {
   children: React.ReactNode;
   className?: string;
   padding?: boolean;
+  hoverable?: boolean;
 }) {
   return (
     <div
       className={cn(
-        'bg-[var(--bg-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-sm)]',
+        'bg-[var(--bg-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-sm-4)]',
+        'transition-shadow duration-200',
+        hoverable && 'hover:shadow-[var(--shadow-sm)] cursor-pointer',
         padding && 'p-6',
         className
       )}

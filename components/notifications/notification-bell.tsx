@@ -1,53 +1,36 @@
 'use client';
 
-import { useActionState } from 'react';
 import { cn } from '@/lib/utils';
 import { Bell } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import {
-  listNotificationsForUser,
-} from '@/lib/data/dal';
-import { markNotificationReadAction, markAllNotificationsReadAction } from '@/lib/data/actions';
+import { useTransition } from 'react';
 import { timeAgo } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/stat-card';
+import { useState } from 'react';
+import { useAuth } from '@/components/providers/auth-provider';
+import {
+  useNotifications,
+  useUnreadCount,
+} from '@/lib/local/data-hooks';
+import { Notifications as NotificationsStore } from '@/lib/local/store';
 
-type Notification = {
-  id: string;
-  title: string;
-  message: string;
-  is_read: boolean;
-  created_at: string;
-  type: string;
-};
-
-export function NotificationBell({ userId }: { userId: string }) {
+export function NotificationBell() {
+  const { currentUser } = useAuth();
+  const userId = currentUser?.id ?? null;
+  const notifications = useNotifications(userId);
+  const count = useUnreadCount(userId);
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [, startTransition] = useTransition();
 
-  const [, markReadAction] = useActionState(markNotificationReadAction, undefined);
-  const [, markAllAction] = useActionState(markAllNotificationsReadAction, undefined);
-
-  useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    listNotificationsForUser(userId).then((data) => {
-      const n = data as Notification[];
-      setNotifications(n);
-      setCount(n.filter((x) => !x.is_read).length);
-      setLoading(false);
+  const handleMarkRead = (id: string) => {
+    startTransition(() => {
+      NotificationsStore.markRead(id);
     });
-  }, [open, userId]);
+  };
 
-  const handleMarkRead = async (id: string) => {
-    const fd = new FormData();
-    fd.append('id', id);
-    await markReadAction(fd);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-    );
-    setCount((c) => Math.max(0, c - 1));
+  const handleMarkAll = () => {
+    if (!userId) return;
+    startTransition(() => {
+      NotificationsStore.markAllRead(userId);
+    });
   };
 
   return (
@@ -59,6 +42,7 @@ export function NotificationBell({ userId }: { userId: string }) {
           'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
         )}
         title="Notifications"
+        aria-label="Notifications"
       >
         <Bell size={16} strokeWidth={1.5} />
         {count > 0 && (
@@ -73,7 +57,7 @@ export function NotificationBell({ userId }: { userId: string }) {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
             className={cn(
-              'absolute right-0 top-full mt-1 w-80',
+              'absolute right-0 top-full mt-1 w-[calc(100vw-2rem)] sm:w-80 max-w-80',
               'bg-[var(--bg-elevated)] border border-[var(--border-subtle)]',
               'rounded-[var(--radius-lg)] shadow-[var(--shadow-md)] overflow-hidden z-50'
             )}
@@ -84,36 +68,24 @@ export function NotificationBell({ userId }: { userId: string }) {
                 Notifications
               </h3>
               {count > 0 && (
-                <form action={async () => {
-                  const fd = new FormData();
-                  await markAllAction(fd);
-                  setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-                  setCount(0);
-                }}>
-                  <button type="submit" className="text-[12px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-                    Mark all read
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  onClick={handleMarkAll}
+                  className="text-[12px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  Mark all read
+                </button>
               )}
             </div>
 
             <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border-subtle)]">
-              {loading ? (
-                <div className="p-4 space-y-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="space-y-1.5">
-                      <Skeleton width="60%" height={13} />
-                      <Skeleton width="90%" height={11} />
-                    </div>
-                  ))}
-                </div>
-              ) : notifications.length === 0 ? (
+              {notifications.length === 0 ? (
                 <div className="py-10 text-center">
                   <Bell size={24} strokeWidth={1} className="mx-auto text-[var(--text-tertiary)] mb-2" />
                   <p className="text-[13px] text-[var(--text-secondary)]">No notifications</p>
                 </div>
               ) : (
-                notifications.slice(0, 10).map(n => (
+                notifications.slice(0, 10).map((n) => (
                   <div
                     key={n.id}
                     className={cn(

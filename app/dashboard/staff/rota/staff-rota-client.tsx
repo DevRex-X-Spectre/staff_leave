@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PageHeader, Skeleton, EmptyState } from '@/components/ui/stat-card';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, Info } from 'lucide-react';
+import { useAuth } from '@/components/providers/auth-provider';
+import { useRotaSlotsByDepartment } from '@/lib/local/data-hooks';
+import { Users as UsersStore } from '@/lib/local/store';
+import { Info, Users as UsersIcon } from 'lucide-react';
 
 type RotaRow = {
   slot_start: string;
@@ -26,7 +29,6 @@ function ymd(d: Date): string {
 }
 
 function eachDay(startIso: string, endIso: string): string[] {
-  // FullCalendar end dates are exclusive — strip to days inclusive of start, exclusive of end.
   const out: string[] = [];
   const s = new Date(startIso);
   const e = new Date(endIso);
@@ -55,21 +57,33 @@ function bucketByDay(rows: RotaRow[]): DayBucket[] {
   return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function StaffRotaClient({
-  slots,
-  departmentSize,
-  departmentId,
-}: {
-  slots: RotaRow[];
-  departmentSize: number;
-  departmentId: string | null;
-}) {
+export function StaffRotaClient() {
+  const { currentUser } = useAuth();
+  const departmentId = currentUser?.department_id ?? null;
+  const slots = useRotaSlotsByDepartment(departmentId);
   const calendarRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [peakCount, setPeakCount] = useState(0);
   const [uniqueDays, setUniqueDays] = useState(0);
 
-  const buckets = useMemo(() => bucketByDay(slots), [slots]);
+  const rows: RotaRow[] = useMemo(
+    () =>
+      slots.map((s) => ({
+        slot_start: s.slot_start,
+        slot_end: s.slot_end,
+        leave_type_id: s.leave_type_id,
+      })),
+    [slots]
+  );
+
+  const buckets = useMemo(() => bucketByDay(rows), [rows]);
+
+  const departmentSize = useMemo(() => {
+    if (!departmentId) return 0;
+    return UsersStore.all().filter(
+      (u) => u.department_id === departmentId && u.is_active && u.is_approved
+    ).length;
+  }, [departmentId]);
 
   useEffect(() => {
     if (buckets.length) {
@@ -92,7 +106,6 @@ export function StaffRotaClient({
       extendedProps: { count: b.count },
     }));
 
-    // Numeric badge event rendered in the foreground for accessibility.
     const labelEvents = buckets.map((b) => ({
       start: b.date,
       allDay: true,
@@ -101,7 +114,7 @@ export function StaffRotaClient({
       textColor: '#ffffff',
     }));
 
-    import('@fullcalendar/react').then(({ default: Calendar }) => {
+    import('@fullcalendar/core').then(({ Calendar }) => {
       import('@fullcalendar/daygrid').then(() => {
         if (!calendarRef.current) return;
         new Calendar(calendarRef.current, {
@@ -120,7 +133,6 @@ export function StaffRotaClient({
     });
 
     return () => {
-      // Cleanup innerHTML so re-renders don't duplicate.
       if (calendarRef.current) calendarRef.current.innerHTML = '';
     };
   }, [buckets]);
@@ -143,7 +155,7 @@ export function StaffRotaClient({
     );
   }
 
-  if (!slots.length) {
+  if (!rows.length) {
     return (
       <div className="animate-fade-in">
         <PageHeader
@@ -152,7 +164,7 @@ export function StaffRotaClient({
         />
         <Card>
           <EmptyState
-            icon={Users}
+            icon={UsersIcon}
             title="No published rota"
             description="Your HOD has not published a rota yet. Check back later."
           />
@@ -169,7 +181,7 @@ export function StaffRotaClient({
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
         <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[var(--radius-card)] px-4 py-3">
           <p className="text-[11px] uppercase tracking-widest text-[var(--text-tertiary)]">Department</p>
           <p className="text-[18px] font-semibold text-[var(--text-primary)] mt-1">{departmentSize} staff</p>
@@ -187,7 +199,7 @@ export function StaffRotaClient({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-6 mb-4">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLOR_LIGHT }} />
           <span className="text-[13px] text-[var(--text-secondary)]">1 person on leave</span>

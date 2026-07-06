@@ -13,7 +13,7 @@ export default function AdminSettingsPage() {
         description="Configure institution branding and notification preferences."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Institution */}
         <Card>
           <div className="flex items-center gap-3 mb-4">
@@ -96,7 +96,7 @@ export default function AdminSettingsPage() {
             ].map((rule) => (
               <div key={rule.type} className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] last:border-0">
                 <span className="text-[13px] text-[var(--text-secondary)]">{rule.type}</span>
-                <div className="flex items-center gap-3 text-[12px] text-[var(--text-tertiary)]">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[var(--text-tertiary)]">
                   <span>Academic: {rule.academic}</span>
                   <span>Non-academic: {rule.nonAcademic}</span>
                 </div>

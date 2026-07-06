@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { DEMO_COOKIE_NAME } from '@/lib/mock/session';
+import { DEMO_COOKIE_NAME, DEMO_ROLE_COOKIE_NAME } from '@/lib/local/constants';
 import { isSupabaseConfigured } from '@/lib/utils';
 import { createServerClient } from '@supabase/ssr';
 
@@ -12,16 +12,18 @@ import { createServerClient } from '@supabase/ssr';
  *  - Unauthenticated user hitting a /dashboard route → /login
  *  - Authenticated user with is_approved=false hitting a /dashboard
  *    route → /pending-approval
- *  - Authenticated user hitting /login or /register → /dashboard/{role}
- *  - Authenticated user hitting / → /dashboard/{role}
+ *  - Authenticated user hitting /login or / → /dashboard/{role}
+ *  - /register is a server-side redirect to /login (no public signup flow)
  *
  * Auth sources:
  *  - Supabase auth cookies when configured
  *  - Demo-mode cookie otherwise
  */
 
-// Routes that don't require authentication
-const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/pending-approval'];
+// Routes that don't require authentication.
+// Self-signup is disabled — staff-ID accounts are provisioned by HR/admin,
+// so /register no longer lives as a public route (it redirects to /login).
+const PUBLIC_ROUTES = ['/', '/login', '/pending-approval'];
 const PUBLIC_PREFIXES = ['/_next', '/api/auth', '/favicon', '/images', '/icons', '/public'];
 
 function isProtected(pathname: string) {
@@ -47,7 +49,7 @@ function roleToDashboard(role: string): string {
   }
 }
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   if (isPublicAsset(pathname)) return NextResponse.next();
 
@@ -98,7 +100,7 @@ export async function proxy(req: NextRequest) {
       // Role and approval status will be enforced by the page-level DAL
       // which has access to the in-memory store. For routing purposes we
       // treat any demo cookie as a logged-in user.
-      userRole = req.cookies.get('naub-demo-role')?.value ?? 'admin';
+      userRole = req.cookies.get(DEMO_ROLE_COOKIE_NAME)?.value ?? 'admin';
     }
   }
 
@@ -117,10 +119,11 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  // Already logged in — don't show login/register
+  // Already logged in — don't show login or the landing page.
+  // (/register is a redirect to /login so it doesn't need its own branch.)
   if (
     isAuthed &&
-    (pathname === '/login' || pathname === '/register' || pathname === '/')
+    (pathname === '/login' || pathname === '/')
   ) {
     const url = req.nextUrl.clone();
     url.pathname = roleToDashboard(userRole ?? 'staff');

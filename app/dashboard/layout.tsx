@@ -1,33 +1,43 @@
-import { redirect } from 'next/navigation';
-import { requireUser } from '@/lib/auth';
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
-import { listDepartments } from '@/lib/data/dal';
+'use client';
 
-export default async function DashboardLayoutPage({
+import { useEffect, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/auth-provider';
+import { DashboardLayout as DashboardShell } from '@/components/dashboard/dashboard-layout';
+
+/**
+ * /dashboard layout — gates the whole subtree on auth and renders the
+ * dashboard shell. Replaces the previous server-component DAL fetch.
+ */
+export default function DashboardLayoutPage({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  const user = await requireUser();
+  const { currentUser, ready } = useAuth();
+  const router = useRouter();
 
-  // Get department info for the topbar
-  let department = null;
-  if (user.department_id) {
-    const depts = await listDepartments();
-    department = depts.find((d) => d.id === user.department_id) ?? null;
+  useEffect(() => {
+    if (ready && !currentUser) {
+      router.replace('/login');
+    }
+  }, [ready, currentUser, router]);
+
+  if (!ready) {
+    return <FullScreenMessage message="Loading…" />;
   }
 
+  if (!currentUser) {
+    return <FullScreenMessage message="Redirecting…" />;
+  }
+
+  return <DashboardShell>{children}</DashboardShell>;
+}
+
+function FullScreenMessage({ message }: { message: string }) {
   return (
-    <DashboardLayout
-      role={user.role}
-      user={{
-        full_name: user.full_name,
-        role: user.role,
-        email: user.email,
-        department,
-      }}
-    >
-      {children}
-    </DashboardLayout>
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-page)] text-[var(--text-tertiary)] text-[14px]">
+      {message}
+    </div>
   );
 }

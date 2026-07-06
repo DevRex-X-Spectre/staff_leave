@@ -19,7 +19,7 @@ import {
   ChevronRight,
   ChevronDown,
   X,
-  Menu,
+  UserCircle,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -62,6 +62,12 @@ const ADMIN_NAV: NavGroup[] = [
       { label: 'Notifications', href: '/dashboard/admin/notifications', icon: Bell },
     ],
   },
+  {
+    group: 'Account',
+    items: [
+      { label: 'My Profile', href: '/dashboard/profile', icon: UserCircle },
+    ],
+  },
 ];
 
 const HOD_NAV: NavGroup[] = [
@@ -83,6 +89,12 @@ const HOD_NAV: NavGroup[] = [
     items: [
       { label: 'Leave Rota', href: '/dashboard/hod/rota', icon: CalendarRange },
       { label: 'Department Calendar', href: '/dashboard/hod/calendar', icon: Calendar },
+    ],
+  },
+  {
+    group: 'Account',
+    items: [
+      { label: 'My Profile', href: '/dashboard/profile', icon: UserCircle },
     ],
   },
 ];
@@ -108,6 +120,12 @@ const HR_NAV: NavGroup[] = [
       { label: 'Reports', href: '/dashboard/hr/reports', icon: BarChart3 },
     ],
   },
+  {
+    group: 'Account',
+    items: [
+      { label: 'My Profile', href: '/dashboard/profile', icon: UserCircle },
+    ],
+  },
 ];
 
 const STAFF_NAV: NavGroup[] = [
@@ -123,6 +141,12 @@ const STAFF_NAV: NavGroup[] = [
       { label: 'Apply for Leave', href: '/dashboard/staff/apply', icon: CalendarDays },
       { label: 'My Leave History', href: '/dashboard/staff/my-leaves', icon: Clock },
       { label: 'Leave Rota', href: '/dashboard/staff/rota', icon: CalendarRange },
+    ],
+  },
+  {
+    group: 'Account',
+    items: [
+      { label: 'My Profile', href: '/dashboard/profile', icon: UserCircle },
     ],
   },
 ];
@@ -200,30 +224,42 @@ function SidebarContent({
   role,
   pathname,
   onNavigate,
+  onClose,
 }: {
   role: UserRole;
   pathname: string;
   onNavigate?: () => void;
+  onClose?: () => void;
 }) {
   const nav = navForRole(role);
 
   return (
     <div className="flex flex-col h-full">
-      {/* Brand */}
-      <div className="px-4 py-5 border-b border-[var(--border-subtle)]">
-        <div className="flex items-center gap-2">
+      {/* Brand + (mobile) close button */}
+      <div className="px-4 py-5 border-b border-[var(--border-subtle)] flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <div className="w-7 h-7 bg-[var(--ink)] rounded-[var(--radius-md)] flex items-center justify-center shrink-0">
             <span className="text-white text-[11px] font-bold tracking-tight">NA</span>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-[13px] font-semibold text-[var(--text-primary)] leading-none">
               NAUB LMS
             </p>
-            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-none">
+            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-none truncate">
               Nigerian Army University
             </p>
           </div>
         </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="lg:hidden h-8 w-8 inline-flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+            aria-label="Close navigation menu"
+          >
+            <X size={16} strokeWidth={1.5} />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -251,43 +287,41 @@ function SidebarContent({
   );
 }
 
-export function Sidebar({ role }: { role: UserRole }) {
+export function Sidebar({
+  role,
+  mobileOpen,
+  onMobileOpenChange,
+}: {
+  role: UserRole;
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
+}) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // The TopBar owns the open state when an external handler is provided; we
+  // fall back to local state so the component is still usable on its own.
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = mobileOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    onMobileOpenChange?.(v);
+    if (mobileOpen === undefined) setInternalOpen(v);
+  };
 
   return (
     <>
-      {/* Mobile hamburger trigger */}
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-40 h-9 w-9 inline-flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-        aria-label="Open navigation menu"
-      >
-        <Menu size={16} strokeWidth={1.5} />
-      </button>
-
       {/* Mobile drawer */}
-      {mobileOpen && (
+      {open && (
         <>
           <div
             className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] animate-fade-in"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-[var(--bg-card)] shadow-[var(--shadow-md)] animate-fade-in">
-            <button
-              type="button"
-              onClick={() => setMobileOpen(false)}
-              className="absolute top-3 right-3 h-8 w-8 inline-flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
-              aria-label="Close navigation menu"
-            >
-              <X size={16} strokeWidth={1.5} />
-            </button>
+          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] bg-[var(--bg-card)] shadow-[var(--shadow-md)] animate-fade-in flex flex-col">
             <SidebarContent
               role={role}
               pathname={pathname}
-              onNavigate={() => setMobileOpen(false)}
+              onNavigate={() => setOpen(false)}
+              onClose={() => setOpen(false)}
             />
           </aside>
         </>

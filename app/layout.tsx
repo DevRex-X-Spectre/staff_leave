@@ -3,6 +3,8 @@ import { Cal_Sans, Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/components/providers/auth-provider';
+import { DataProvider } from '@/components/providers/data-provider';
 
 const calSans = Cal_Sans({
   weight: '400',
@@ -13,6 +15,7 @@ const calSans = Cal_Sans({
 
 const inter = Inter({
   subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
   variable: '--font-inter',
   display: 'swap',
 });
@@ -32,19 +35,23 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${calSans.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] antialiased">
         <ThemeProvider>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: 'var(--bg-elevated)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '12px',
-                fontSize: '14px',
-              },
-            }}
-          />
+          <AuthProvider>
+            <DataProvider>
+              {children}
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: 'var(--bg-elevated)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                  },
+                }}
+              />
+            </DataProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -1,31 +1,27 @@
 'use client';
 
-import { useState } from 'react';
-import { PageHeader } from '@/components/ui/stat-card';
-import { Card, CardTitle } from '@/components/ui/stat-card';
+import { useMemo, useState } from 'react';
+import { PageHeader, EmptyState } from '@/components/ui/stat-card';
+import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, FormField, Select } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
-import { EmptyState } from '@/components/ui/stat-card';
-import { adjustEntitlementAction } from '@/lib/data/actions';
 import { formatDate } from '@/lib/utils';
+import {
+  useActiveLeaveTypes,
+  useUsers,
+} from '@/lib/local/data-hooks';
+import { Entitlements } from '@/lib/local/store';
 import { BarChart3, Plus, Minus } from 'lucide-react';
-import type { User, LeaveType, LeaveEntitlement } from '@/types';
+import type { LeaveEntitlement, LeaveType, User } from '@/types';
 import { toast } from 'sonner';
 
-export function EntitlementsClient({
-  staff,
-  leaveTypes,
-  entitlementsMap,
-  currentYear,
-}: {
-  staff: User[];
-  leaveTypes: LeaveType[];
-  entitlementsMap: Record<string, LeaveEntitlement[]>;
-  currentYear: number;
-}) {
+const CURRENT_YEAR = new Date().getFullYear();
+
+export function EntitlementsClient() {
+  const allUsers = useUsers();
+  const leaveTypes = useActiveLeaveTypes();
   const [filterDept, setFilterDept] = useState('');
-  const [filterType, setFilterType] = useState('');
   const [adjustTarget, setAdjustTarget] = useState<{
     entitlementId: string;
     name: string;
@@ -33,65 +29,98 @@ export function EntitlementsClient({
   } | null>(null);
   const [delta, setDelta] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  // Bumped on every mutation so the matrix re-reads fresh entitlements.
+  const [tick, setTick] = useState(0);
+
+  const staff = useMemo(
+    () => allUsers.filter((u) => u.role === 'staff' && u.is_active),
+    [allUsers]
+  );
+
+  // Resolve entitlements per user. Reads straight from the localStorage store
+  // so any mutation (adjust dialog, approval deduction) shows up immediately.
+  const entitlementsByUser = useMemo(() => {
+    // tick is included so the memo recomputes on each adjustment
+    void tick;
+    const map: Record<string, LeaveEntitlement[]> = {};
+    for (const u of staff) {
+      map[u.id] = Entitlements.byUser(u.id, CURRENT_YEAR);
+    }
+    return map;
+  }, [staff, tick]);
 
   const filtered = staff.filter((u) => {
     if (filterDept && u.department_id !== filterDept) return false;
     return true;
   });
 
-  const activeTypes = leaveTypes.filter((t) => t.is_active);
+  const activeTypes = leaveTypes;
 
   const handleAdjust = async () => {
     if (!adjustTarget || delta === 0) return;
     setSubmitting(true);
     try {
-      const fd = new FormData();
-      fd.append('id', adjustTarget.entitlementId);
-      fd.append('delta', String(delta));
-      await adjustEntitlementAction(fd);
+      const ent = Entitlements.byId(adjustTarget.entitlementId);
+      if (!ent) {
+        toast.error('Entitlement not found.');
+        return;
+      }
+      Entitlements.update(adjustTarget.entitlementId, {
+        total_days: Math.max(0, ent.total_days + delta),
+      });
       toast.success(`Balance adjusted by ${delta > 0 ? '+' : ''}${delta} days.`);
       setAdjustTarget(null);
       setDelta(0);
+      // Force the matrix to re-read entitlements.
+      setTick((t) => t + 1);
     } catch (e) {
-      toast.error(String(e));
+      toast.error(String(e instanceof Error ? e.message : String(e)));
     } finally {
       setSubmitting(false);
     }
   };
 
+  const departments = Array.from(
+    new Set(
+      staff
+        .filter((u): u is User & { department_id: string } => u.department_id !== null)
+        .map((u) => u.department_id)
+    )
+  );
+
   return (
     <div className="animate-fade-in">
       <PageHeader
         title="Leave Entitlements"
-        description={`Staff leave balances for the ${currentYear} leave year.`}
+        description={`Staff leave balances for the ${CURRENT_YEAR} leave year.`}
       />
 
       {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
         <Select
           value={filterDept}
           onChange={(e) => setFilterDept(e.target.value)}
           className="w-48"
         >
           <option value="">All departments</option>
-          {[...new Map(staff.filter(u => u.department_id).map(u => [u.department_id, u.department_id])).values()].map((id) => (
+          {departments.map((id) => (
             <option key={id} value={id}>{id}</option>
           ))}
         </Select>
       </div>
 
       <Card padding={false}>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-4 sm:-mx-6 lg:mx-0">
           <table className="w-full">
             <thead>
               <tr className="border-b border-[var(--border-subtle)]">
-                <th className="text-left py-3 px-4 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
+                <th className="text-left py-2.5 px-3 sm:px-4 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
                   Staff
                 </th>
                 {activeTypes.map((lt) => (
                   <th
                     key={lt.id}
-                    className="text-left py-3 px-4 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] whitespace-nowrap"
+                    className="text-left py-2.5 px-3 sm:px-4 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] whitespace-nowrap"
                   >
                     {lt.name}
                   </th>
@@ -107,10 +136,10 @@ export function EntitlementsClient({
                 </tr>
               ) : (
                 filtered.map((u) => {
-                  const ents = entitlementsMap[u.id] ?? [];
+                  const ents = entitlementsByUser[u.id] ?? [];
                   return (
                     <tr key={u.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3 sm:px-4">
                         <p className="text-[13px] font-medium text-[var(--text-primary)]">
                           {u.full_name}
                         </p>
@@ -119,7 +148,7 @@ export function EntitlementsClient({
                       {activeTypes.map((lt) => {
                         const ent = ents.find((e) => e.leave_type_id === lt.id);
                         return (
-                          <td key={lt.id} className="py-3 px-4">
+                          <td key={lt.id} className="py-3 px-3 sm:px-4">
                             {ent ? (
                               <div className="flex items-center gap-2">
                                 <span

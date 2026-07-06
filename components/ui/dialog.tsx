@@ -48,15 +48,15 @@ export function Dialog({
         onClose();
       }}
       className={cn(
-        'backdrop:bg-black/40 p-0 rounded-[var(--radius-xl)] overflow-hidden',
+        'p-0 rounded-[var(--radius-xl)] overflow-hidden',
         'text-[var(--text-primary)]',
-        'max-w-lg w-full mx-auto my-auto',
+        'max-w-lg w-[calc(100vw-2rem)] sm:w-full mx-auto my-auto',
         'shadow-lg'
       )}
     >
       <div
         className={cn(
-          'bg-[var(--bg-card)] rounded-[var(--radius-xl)] p-6',
+          'bg-[var(--bg-card)] rounded-[var(--radius-xl)] p-4 sm:p-6',
           'max-h-[85vh] overflow-y-auto',
           className
         )}

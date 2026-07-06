@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PageHeader } from '@/components/ui/stat-card';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, FormField, Textarea, Select } from '@/components/ui/input';
-import { EmptyState } from '@/components/ui/stat-card';
 import { CalendarRange, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/components/providers/auth-provider';
+import { useUsers } from '@/lib/local/data-hooks';
+import { Notifications, Rotas, Slots } from '@/lib/local/store';
 
 type Slot = {
   user_id: string;
@@ -17,6 +19,20 @@ type Slot = {
 };
 
 export default function HodRotaPage() {
+  const { currentUser } = useAuth();
+  const allUsers = useUsers();
+
+  const deptStaff = useMemo(
+    () =>
+      allUsers.filter(
+        (u) =>
+          currentUser?.department_id &&
+          u.department_id === currentUser.department_id &&
+          u.role === 'staff'
+      ),
+    [allUsers, currentUser?.department_id]
+  );
+
   const [title, setTitle] = useState('');
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
@@ -47,17 +63,45 @@ export default function HodRotaPage() {
       toast.error('Fill in all required fields.');
       return;
     }
+    if (!currentUser) {
+      toast.error('Not signed in.');
+      return;
+    }
     setSubmitting(true);
     try {
-      const { publishRotaAction } = await import('@/lib/data/actions');
-      const fd = new FormData();
-      fd.append('title', title);
-      fd.append('period_start', periodStart);
-      fd.append('period_end', periodEnd);
-      fd.append('max_concurrent', String(maxConcurrent));
-      fd.append('notes', notes);
-      fd.append('slots', JSON.stringify(slots));
-      await publishRotaAction(fd);
+      const rota = Rotas.insert({
+        department_id: currentUser.department_id ?? '',
+        title,
+        period_start: periodStart,
+        period_end: periodEnd,
+        max_concurrent: maxConcurrent,
+        published_by: currentUser.id,
+        notes: notes || null,
+      });
+
+      for (const s of slots) {
+        if (!s.user_id) continue;
+        Slots.insert({
+          rota_id: rota.id,
+          user_id: s.user_id,
+          slot_start: s.slot_start,
+          slot_end: s.slot_end,
+          leave_type_id: s.leave_type_id || null,
+        });
+      }
+
+      // Notify all staff in the department.
+      for (const staff of deptStaff) {
+        Notifications.insert({
+          user_id: staff.id,
+          title: 'Rota published',
+          message: `${title} has been published for the period ${periodStart} – ${periodEnd}.`,
+          type: 'rota_published',
+          is_read: false,
+          related_application_id: null,
+        });
+      }
+
       toast.success('Rota published successfully!');
       setTitle('');
       setPeriodStart('');
@@ -66,7 +110,7 @@ export default function HodRotaPage() {
       setNotes('');
       setSlots([]);
     } catch (e) {
-      toast.error(String(e));
+      toast.error(String(e instanceof Error ? e.message : e));
     } finally {
       setSubmitting(false);
     }
@@ -87,7 +131,7 @@ export default function HodRotaPage() {
 
       <Card>
         <CardTitle className="mb-4">Publish new rota</CardTitle>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6">
           <FormField label="Rota title">
             <Input
               value={title}
@@ -141,13 +185,19 @@ export default function HodRotaPage() {
           ) : (
             <div className="space-y-3">
               {slots.map((slot, i) => (
-                <div key={i} className="grid grid-cols-4 gap-3 items-end">
+                <div key={i} className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
                   <FormField label="Staff">
-                    <Input
+                    <Select
                       value={slot.user_id}
                       onChange={(e) => updateSlot(i, 'user_id', e.target.value)}
-                      placeholder="Staff name or ID"
-                    />
+                    >
+                      <option value="">Select staff</option>
+                      {deptStaff.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.full_name}
+                        </option>
+                      ))}
+                    </Select>
                   </FormField>
                   <FormField label="Start">
                     <Input
