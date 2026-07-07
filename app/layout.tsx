@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Cal_Sans, Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
-import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { DataProvider } from '@/components/providers/data-provider';
 
@@ -32,27 +31,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${calSans.variable} ${inter.variable}`}>
+    <html lang="en" className={`${calSans.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] antialiased">
-        <ThemeProvider>
-          <AuthProvider>
-            <DataProvider>
-              {children}
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  style: {
-                    background: 'var(--bg-elevated)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                  },
-                }}
-              />
-            </DataProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <DataProvider>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                style: {
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </DataProvider>
+        </AuthProvider>
       </body>
     </html>
   );

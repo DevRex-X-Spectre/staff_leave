@@ -2,7 +2,6 @@
 
 import { Clock, ArrowLeft, Mail } from 'lucide-react';
 import Link from 'next/link';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function PendingApprovalPage() {
   return (
@@ -16,7 +15,6 @@ export default function PendingApprovalPage() {
           <ArrowLeft size={14} />
           Back to home
         </Link>
-        <ThemeToggle />
       </div>
 
       {/* Content */}

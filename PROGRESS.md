@@ -2,7 +2,7 @@
 
 > Last updated: 2026-07-06
 
-## Status: PHASE 11 COMPLETE — registration flow removed (staff-ID auth only) + WCAG AA contrast fixed end-to-end; all 29 routes compile clean
+## Status: PHASE 12 COMPLETE — dark mode removed (strict light theme) + `--ink` CSS variable fix (buttons now visible); all 29 routes compile clean
 
 ---
 

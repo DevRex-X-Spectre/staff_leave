@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input, FormField } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -75,7 +74,6 @@ export default function LoginPage() {
           <ArrowLeft size={14} />
           Back to home
         </Link>
-        <ThemeToggle />
       </div>
 
       {/* Form area */}

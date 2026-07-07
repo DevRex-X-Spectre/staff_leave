@@ -23,7 +23,7 @@ const buttonVariants = cva(
       variant: {
         ink: [
           'bg-[var(--ink)] text-[var(--text-on-ink)]',
-          'hover:bg-[#2a2a2a] dark:hover:bg-[#3a3a3a]',
+          'hover:bg-[#1c1c1c]',
           'rounded-full px-6 py-2.5',
         ],
         secondary: [
@@ -33,7 +33,7 @@ const buttonVariants = cva(
         ],
         header: [
           'bg-[var(--ink)] text-[var(--text-on-ink)]',
-          'hover:bg-[#2a2a2a] dark:hover:bg-[#3a3a3a]',
+          'hover:bg-[#1c1c1c]',
           'rounded-[var(--radius-md)] px-4 py-2 text-[13px]',
         ],
         'header-secondary': [

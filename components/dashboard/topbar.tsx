@@ -13,7 +13,6 @@ import {
 import { useState, useTransition } from 'react';
 import { initials } from '@/lib/utils';
 import { NotificationBell } from '@/components/notifications/notification-bell';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuth } from '@/components/providers/auth-provider';
 import { dashboardPathFor } from '@/lib/local/routes';
 import Link from 'next/link';
@@ -83,8 +82,6 @@ export function TopBar({
       {/* Right controls */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         <NotificationBell />
-
-        <ThemeToggle />
 
         {/* User menu */}
         <div className="relative">
