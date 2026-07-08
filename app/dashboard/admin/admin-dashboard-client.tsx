@@ -13,6 +13,13 @@ import {
   useUsers,
 } from '@/lib/local/data-hooks';
 
+const ROLE_LABEL: Record<string, string> = {
+  admin: 'Administrator',
+  hod: 'Head of Department',
+  hr_manager: 'Registrar',
+  staff: 'Staff Member',
+};
+
 export function AdminDashboardClient() {
   const pending = useApprovalRequests('pending');
   const allUsers = useUsers();
@@ -74,7 +81,7 @@ export function AdminDashboardClient() {
                       {req.user?.full_name ?? '-'}
                     </p>
                     <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">
-                      {req.user?.email ?? ''} Â· {req.requested_role}
+                      {req.user?.email ?? ''} · {ROLE_LABEL[req.requested_role] ?? req.requested_role}
                     </p>
                     <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
                       {timeAgo(req.created_at)}

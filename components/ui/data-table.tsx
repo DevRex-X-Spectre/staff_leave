@@ -26,7 +26,7 @@ export interface DataTableProps<TData> {
 export function DataTable<TData>({
   data,
   columns,
-  searchPlaceholder = 'Search…',
+  searchPlaceholder = 'Search...',
   searchKey,
   pageSize = 10,
   emptyState,
@@ -118,7 +118,7 @@ export function DataTable<TData>({
             {loading ? (
               <tr>
                 <td colSpan={columns.length} className="py-12 text-center text-[13px] text-[var(--text-secondary)]">
-                  Loading…
+                  Loading...
                 </td>
               </tr>
             ) : table.getRowModel().rows.length === 0 ? (
@@ -153,7 +153,7 @@ export function DataTable<TData>({
       {rowCount > 0 && (
         <div className="flex items-center justify-between mt-4 text-[12px] text-[var(--text-tertiary)]">
           <span>
-            Showing {pageIndex * pageSize + 1}–
+            Showing {pageIndex * pageSize + 1}-
             {Math.min((pageIndex + 1) * pageSize, rowCount)} of {rowCount}
           </span>
           <div className="flex items-center gap-1">

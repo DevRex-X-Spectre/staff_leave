@@ -95,7 +95,7 @@ export default function HodRotaPage() {
         Notifications.insert({
           user_id: staff.id,
           title: 'Rota published',
-          message: `${title} has been published for the period ${periodStart} – ${periodEnd}.`,
+          message: `${title} has been published for the period ${periodStart} - ${periodEnd}.`,
           type: 'rota_published',
           is_read: false,
           related_application_id: null,
@@ -124,7 +124,7 @@ export default function HodRotaPage() {
         actions={
           <Button variant="ink" onClick={handleSubmit} disabled={submitting}>
             <CalendarRange size={15} />
-            {submitting ? 'Publishing…' : 'Publish rota'}
+            {submitting ? 'Publishing...' : 'Publish rota'}
           </Button>
         }
       />
@@ -160,7 +160,7 @@ export default function HodRotaPage() {
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any additional notes for staff…"
+            placeholder="Any additional notes for staff..."
             rows={2}
           />
         </FormField>

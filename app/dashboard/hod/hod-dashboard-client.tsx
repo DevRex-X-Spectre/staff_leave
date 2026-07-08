@@ -37,7 +37,7 @@ export function HodDashboardClient() {
         title="HOD Dashboard"
         description={
           department
-            ? `${department.name} Â· Head of Department`
+            ? `${department.name} · Head of Department`
             : 'Department overview'
         }
       />
@@ -106,7 +106,7 @@ export function HodDashboardClient() {
                       {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} - {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}

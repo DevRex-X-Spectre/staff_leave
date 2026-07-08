@@ -16,7 +16,7 @@ export default function ProfilePage() {
   if (!ready || !currentUser) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center text-[var(--text-tertiary)]">
-        Loading…
+        Loading...
       </div>
     );
   }

@@ -141,7 +141,7 @@ export default function LoginPage() {
                   variant="ink"
                   disabled={submitting}
                 >
-                  {submitting ? 'Signing in…' : 'Sign in'}
+                  {submitting ? 'Signing in...' : 'Sign in'}
                 </Button>
               </div>
             </form>

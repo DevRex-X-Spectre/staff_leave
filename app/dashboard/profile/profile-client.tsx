@@ -181,7 +181,7 @@ export function ProfileClient({ user }: { user: User }) {
               Passwords are stored locally in this browser (demo mode).
             </p>
             <Button type="submit" variant="ink" disabled={isPending}>
-              {isPending ? 'Saving…' : 'Update password'}
+              {isPending ? 'Saving...' : 'Update password'}
             </Button>
           </div>
         </form>

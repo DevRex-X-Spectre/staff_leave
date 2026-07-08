@@ -222,7 +222,7 @@ export function EntitlementsClient() {
               disabled={delta === 0}
               onClick={handleAdjust}
             >
-              {submitting ? 'Savingâ€¦' : 'Save adjustment'}
+              {submitting ? 'Saving...' : 'Save adjustment'}
             </Button>
           </div>
         </Dialog>

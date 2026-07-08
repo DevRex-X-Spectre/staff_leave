@@ -150,7 +150,7 @@ export function HodRequestsClient() {
                       {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} - {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}
@@ -212,8 +212,8 @@ export function HodRequestsClient() {
                 {selectedApp.applicant?.full_name}
               </p>
               <p className="text-[12px] text-[var(--text-secondary)]">
-                {selectedApp.leave_type?.name} Â· {formatDate(selectedApp.start_date)} â€“{' '}
-                {formatDate(selectedApp.end_date)} Â· {selectedApp.total_days} days
+                {selectedApp.leave_type?.name} · {formatDate(selectedApp.start_date)} -{' '}
+                {formatDate(selectedApp.end_date)} · {selectedApp.total_days} days
               </p>
             </div>
             <FormField

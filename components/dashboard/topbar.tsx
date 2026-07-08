@@ -182,7 +182,7 @@ export function TopBar({
                     <du.icon size={14} className="text-[var(--text-tertiary)] shrink-0" />
                     <span className="text-[var(--text-secondary)] truncate flex-1">{du.name}</span>
                     <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase shrink-0 bg-[var(--bg-subtle)] text-[var(--text-tertiary)]">
-                      {du.role}
+                      {ROLE_LABEL[du.role] ?? du.role}
                     </span>
                   </button>
                 ))}

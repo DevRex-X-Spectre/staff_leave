@@ -18,7 +18,7 @@ export default function HodCalendarPage() {
   if (!ready) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center text-[var(--text-tertiary)]">
-        Loading…
+        Loading...
       </div>
     );
   }

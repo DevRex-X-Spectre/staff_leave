@@ -24,11 +24,11 @@ export default function DashboardLayoutPage({
   }, [ready, currentUser, router]);
 
   if (!ready) {
-    return <FullScreenMessage message="Loading…" />;
+    return <FullScreenMessage message="Loading..." />;
   }
 
   if (!currentUser) {
-    return <FullScreenMessage message="Redirecting…" />;
+    return <FullScreenMessage message="Redirecting..." />;
   }
 
   return <DashboardShell>{children}</DashboardShell>;

@@ -260,7 +260,7 @@ export function ApplyLeaveClient() {
             <CardDescription className="mb-5">Provide a brief explanation of why you need this leave.</CardDescription>
             <FormField label="Reason" error={errors.reason?.message}>
               <Textarea
-                placeholder="e.g. Annual family vacation, medical appointmentâ€¦"
+                placeholder="e.g. Annual family vacation, medical appointment..."
                 rows={4}
                 {...register('reason')}
               />
@@ -311,7 +311,7 @@ export function ApplyLeaveClient() {
             </Button>
           ) : (
             <Button variant="ink" onClick={handleSubmit(onSubmit)} disabled={submitting}>
-              {submitting ? 'Submittingâ€¦' : 'Submit application'}
+              {submitting ? 'Submitting...' : 'Submit application'}
               <CheckCircle size={15} />
             </Button>
           )}

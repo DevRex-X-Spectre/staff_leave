@@ -1,4 +1,4 @@
-﻿import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Check, X, Clock, ArrowRight } from 'lucide-react';
 import type { LeaveStatus } from '@/types';
 
@@ -50,8 +50,8 @@ function StatusIcon({
 }
 
 /**
- * LeaveTracker â€” stepper showing the multi-gate approval flow:
- * Submitted â†’ HOD Review â†’ Registrar Review â†’ Final Decision
+ * LeaveTracker - stepper showing the multi-gate approval flow:
+ * Submitted â†' HOD Review â†' Registrar Review â†' Final Decision
  *
  * Used in the staff "My Leave History" drawer.
  */

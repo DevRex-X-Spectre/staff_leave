@@ -141,7 +141,7 @@ export function ConfirmDialog({
             variant === 'danger' ? 'bg-[var(--danger)] hover:opacity-90' : 'bg-[var(--ink)] hover:bg-[#2a2a2a]'
           )}
         >
-          {loading ? 'Processing…' : confirmLabel}
+          {loading ? 'Processing...' : confirmLabel}
         </button>
       </div>
     </Dialog>

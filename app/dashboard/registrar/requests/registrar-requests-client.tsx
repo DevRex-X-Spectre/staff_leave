@@ -154,7 +154,7 @@ export function RegistrarRequestsClient() {
                       {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} - {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}
@@ -204,11 +204,11 @@ export function RegistrarRequestsClient() {
           <div className="space-y-4">
             <div className="p-3 bg-[var(--bg-subtle)] rounded-[var(--radius-md)]">
               <p className="text-[13px] font-medium text-[var(--text-primary)]">
-                {selectedApp.applicant?.full_name} Â· {selectedApp.department?.name}
+                {selectedApp.applicant?.full_name} · {selectedApp.department?.name}
               </p>
               <p className="text-[12px] text-[var(--text-secondary)]">
-                {selectedApp.leave_type?.name} Â· {formatDate(selectedApp.start_date)} â€“{' '}
-                {formatDate(selectedApp.end_date)} Â· {selectedApp.total_days} days
+                {selectedApp.leave_type?.name} · {formatDate(selectedApp.start_date)} -{' '}
+                {formatDate(selectedApp.end_date)} · {selectedApp.total_days} days
               </p>
             </div>
             <FormField
@@ -219,8 +219,8 @@ export function RegistrarRequestsClient() {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={
                   action === 'reject'
-                    ? 'Enter reason for rejectionâ€¦'
-                    : 'Optional commentâ€¦'
+                    ? 'Enter reason for rejection...'
+                    : 'Optional comment...'
                 }
                 rows={3}
               />
@@ -240,7 +240,7 @@ export function RegistrarRequestsClient() {
                 handleDecision(selectedApp.id, action as 'approved' | 'rejected')
               }
             >
-              {isPending ? 'Processingâ€¦' : action === 'approve' ? 'Confirm approval' : 'Confirm rejection'}
+              {isPending ? 'Processing...' : action === 'approve' ? 'Confirm approval' : 'Confirm rejection'}
             </Button>
           </div>
         </Dialog>
