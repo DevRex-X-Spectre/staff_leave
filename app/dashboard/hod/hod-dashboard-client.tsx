@@ -37,7 +37,7 @@ export function HodDashboardClient() {
         title="HOD Dashboard"
         description={
           department
-            ? `${department.name} · Head of Department`
+            ? `${department.name} Â· Head of Department`
             : 'Department overview'
         }
       />
@@ -49,7 +49,7 @@ export function HodDashboardClient() {
           icon={Clock}
         />
         <StatCard
-          label="Awaiting HR approval"
+          label="Awaiting Registrar approval"
           value={awaiting}
           icon={CheckCircle}
         />
@@ -100,13 +100,13 @@ export function HodDashboardClient() {
                 {pendingApps.slice(0, 8).map((app) => (
                   <tr key={app.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                     <td className="py-3 px-3 sm:px-4 text-[13px] font-medium text-[var(--text-primary)] whitespace-nowrap">
-                      {app.applicant?.full_name ?? '—'}
+                      {app.applicant?.full_name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {app.leave_type?.name ?? '—'}
+                      {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {formatDate(app.start_date)} – {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}

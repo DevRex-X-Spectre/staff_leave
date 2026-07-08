@@ -3,7 +3,7 @@ import { type ButtonHTMLAttributes, forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 /* -------------------------------------------------------------------------
-   Button variants — Cal.com style:
+   Button variants - Cal.com style:
    - ink:      solid Ink pill (primary CTA)
    - secondary: paper-pill with visible graphite text (secondary ghost)
    - header:    solid Ink rectangle, 8px radius (header CTA)

@@ -6,7 +6,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { DashboardLayout as DashboardShell } from '@/components/dashboard/dashboard-layout';
 
 /**
- * /dashboard layout — gates the whole subtree on auth and renders the
+ * /dashboard layout - gates the whole subtree on auth and renders the
  * dashboard shell. Replaces the previous server-component DAL fetch.
  */
 export default function DashboardLayoutPage({

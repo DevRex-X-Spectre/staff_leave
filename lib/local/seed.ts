@@ -17,7 +17,7 @@ import { DEFAULT_PASSWORD } from './constants';
  * so the eventual Supabase migration is a 1:1 swap.
  *
  * `passwords` is keyed by user id (not email) and assigns every seeded user
- * the same default password — changeable from each user's profile.
+ * the same default password - changeable from each user's profile.
  */
 
 export type SeedData = {
@@ -61,7 +61,7 @@ const users: User[] = [
     full_name: 'Amina Bello',
     email: 'hr@naub.edu.ng',
     phone: '+234 800 000 0002',
-    staff_id: 'NAUB/HR/001',
+    staff_id: 'NAUB/REG/001',
     role: 'hr_manager',
     staff_type: 'non_academic',
     department_id: 'dept-admin',

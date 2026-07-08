@@ -6,7 +6,7 @@ import { UAR, Users, Passwords, Session } from './store';
 
 /**
  * Plaintext-equality authentication against the localStorage password map.
- * Documented as demo-only — passwords here are not hashed, just like the
+ * Documented as demo-only - passwords here are not hashed, just like the
  * previous in-memory mock. The eventual Supabase migration swaps this for
  * `@supabase/ssr`'s signInWithPassword.
  */
@@ -77,12 +77,12 @@ export function getCurrentUser(): User | null {
   return Users.byId(id);
 }
 
-/** Sign out — clears session + cookie mirrors. */
+/** Sign out - clears session + cookie mirrors. */
 export function logout() {
   Session.clear();
 }
 
-/** Switch the demo user — used by the topbar role-switcher. */
+/** Switch the demo user - used by the topbar role-switcher. */
 export function switchUser(userId: string): User | null {
   const user = Users.byId(userId);
   if (!user) return null;

@@ -1,5 +1,5 @@
 -- ============================================================================
--- NAUB Staff Leave Management System — Initial Schema
+-- NAUB Staff Leave Management System - Initial Schema
 -- Apply via Supabase SQL editor or `supabase db push`.
 -- ============================================================================
 
@@ -359,7 +359,7 @@ create policy "uar_admin_write" on public.user_approval_requests
   );
 
 -- ============================================================================
--- SEED DATA — leave types, departments, default admin
+-- SEED DATA - leave types, departments, default admin
 -- ============================================================================
 
 -- Departments
@@ -380,8 +380,8 @@ insert into public.leave_types (id, name, applicable_to, max_days_academic, max_
   ('99999999-9999-9999-9999-999999999999', 'Compassionate Leave','both',       7,   7,   false)
 on conflict do nothing;
 
--- Default admin (password: Admin@NAUB2026) — see README to log in.
--- Note: this row references auth.users — to actually log in you must
+-- Default admin (password: Admin@NAUB2026) - see README to log in.
+-- Note: this row references auth.users - to actually log in you must
 -- first create the matching user via Supabase Auth (Auth → Users → Add user).
 -- Once created, run:
 --   insert into public.users (id, full_name, email, role, staff_type, department_id, is_approved, is_active, staff_id)

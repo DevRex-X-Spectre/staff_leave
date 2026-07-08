@@ -1,10 +1,10 @@
 'use client';
 
 import { useAuth } from '@/components/providers/auth-provider';
-import { HrAllApplicationsClient } from './all-applications-client';
+import { RegistrarRequestsClient } from './registrar-requests-client';
 
-export default function HrAllApplicationsPage() {
+export default function RegistrarRequestsPage() {
   const { ready, currentUser } = useAuth();
   if (!ready || !currentUser) return null;
-  return <HrAllApplicationsClient />;
+  return <RegistrarRequestsClient />;
 }

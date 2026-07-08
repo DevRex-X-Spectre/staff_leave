@@ -5,7 +5,7 @@ import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { LeaveWidgetCard } from './leave-widget-card';
 
 /**
- * Landing page — Cal.com design skill, hero + 3-column feature grid.
+ * Landing page - Cal.com design skill, hero + 3-column feature grid.
  *
  * Exactly the patterns described in design_skill/cal.com.md:
  *   - Hero: headline + body + 2 CTAs on the left, scheduling widget on the right
@@ -43,7 +43,7 @@ export function LandingPage() {
       <main className="flex-1">
         <section className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-16 sm:pt-20 lg:pt-24 pb-16 sm:pb-20 lg:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-14 items-center">
-            {/* Left — copy */}
+            {/* Left - copy */}
             <div>
               <h1
                 className="font-semibold text-[var(--graphite,#242424)]"
@@ -89,14 +89,14 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Right — scheduling-widget card */}
+            {/* Right - scheduling-widget card */}
             <div>
               <LeaveWidgetCard />
             </div>
           </div>
         </section>
 
-        {/* FEATURES — 3-column grid, the Cal.com pattern below the hero */}
+        {/* FEATURES - 3-column grid, the Cal.com pattern below the hero */}
         <section
           id="features"
           className="max-w-[1200px] mx-auto px-4 sm:px-6 pb-20 sm:pb-24"
@@ -129,7 +129,7 @@ export function LandingPage() {
                 letterSpacing: 'var(--tracking-body)',
               }}
             >
-              One streamlined flow for the whole university — no paper
+              One streamlined flow for the whole university: no paper
               forms, no queues, no lost requests.
             </p>
           </div>
@@ -151,7 +151,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      {/* FOOTER — 3-region footer per the Cal.com style guide */}
+      {/* FOOTER - 3-region footer per the Cal.com style guide */}
       <footer className="border-t border-[var(--silver,#e5e7eb)] bg-[var(--white,#ffffff)] mt-auto">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-12 sm:py-14">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
@@ -236,7 +236,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Bottom strip — copyright */}
+          {/* Bottom strip - copyright */}
           <div className="mt-10 pt-6 border-t border-[var(--silver,#e5e7eb)] flex items-center justify-between gap-4 flex-wrap">
             <p className="text-[12px] text-[var(--stone,#898989)]"
               style={{ fontFamily: 'var(--font-cal-sans-ui)' }}
@@ -271,7 +271,7 @@ const FEATURES = [
   {
     title: 'Rota-aware calendar',
     description:
-      'HODs publish departmental rotas so staff see conflicts before they apply — never after they’ve already submitted.',
+      'HODs publish departmental rotas so staff see conflicts before they apply, never after they have already submitted.',
     icon: CalendarRange,
   },
 ];

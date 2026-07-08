@@ -61,7 +61,7 @@ export function HodRequestsClient() {
           decision: decisionValue,
           comment: comment || null,
         });
-        // 3) Notify applicant + HR managers
+        // 3) Notify applicant + Registrar managers
         const applicant = Users.byId(app.applicant_id);
         const lt = LeaveTypes.byId(app.leave_type_id);
         if (applicant && lt) {
@@ -73,7 +73,7 @@ export function HodRequestsClient() {
                 : 'HOD rejected your leave',
             message:
               decision === 'approve'
-                ? 'Your leave has been forwarded to HR for final approval.'
+                ? 'Your leave has been forwarded to the Registrar for final approval.'
                 : comment || 'Your HOD did not approve the leave.',
             type: decision === 'approve' ? 'leave_approved' : 'leave_rejected',
             is_read: false,
@@ -84,7 +84,7 @@ export function HodRequestsClient() {
             hrs.forEach((hr) => {
               Notifications.insert({
                 user_id: hr.id,
-                title: 'Leave awaiting HR review',
+                title: 'Leave awaiting Registrar review',
                 message: `${applicant.full_name}'s ${lt.name} request needs final approval.`,
                 type: 'leave_submitted',
                 is_read: false,
@@ -95,7 +95,7 @@ export function HodRequestsClient() {
         }
         toast.success(
           decision === 'approve'
-            ? 'Leave approved and forwarded to HR.'
+            ? 'Leave approved and forwarded to the Registrar.'
             : 'Leave rejected.'
         );
         setAction(null);
@@ -144,13 +144,13 @@ export function HodRequestsClient() {
                 {apps.map((app) => (
                   <tr key={app.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                     <td className="py-3 px-3 sm:px-4 text-[13px] font-medium text-[var(--text-primary)] whitespace-nowrap">
-                      {app.applicant?.full_name ?? '—'}
+                      {app.applicant?.full_name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {app.leave_type?.name ?? '—'}
+                      {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {formatDate(app.start_date)} – {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}
@@ -164,7 +164,7 @@ export function HodRequestsClient() {
                           <AlertTriangle size={13} /> Conflict
                         </span>
                       ) : (
-                        <span className="text-[12px] text-[var(--text-tertiary)]">—</span>
+                        <span className="text-[12px] text-[var(--text-tertiary)]">-</span>
                       )}
                     </td>
                     <td className="py-3">
@@ -212,8 +212,8 @@ export function HodRequestsClient() {
                 {selectedApp.applicant?.full_name}
               </p>
               <p className="text-[12px] text-[var(--text-secondary)]">
-                {selectedApp.leave_type?.name} · {formatDate(selectedApp.start_date)} –{' '}
-                {formatDate(selectedApp.end_date)} · {selectedApp.total_days} days
+                {selectedApp.leave_type?.name} Â· {formatDate(selectedApp.start_date)} â€“{' '}
+                {formatDate(selectedApp.end_date)} Â· {selectedApp.total_days} days
               </p>
             </div>
             <FormField

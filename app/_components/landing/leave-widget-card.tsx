@@ -4,13 +4,13 @@ import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 /**
- * Scheduling-widget card for the landing hero — a clean, isolated
+ * Scheduling-widget card for the landing hero - a clean, isolated
  * product slice showing a leave calendar. Built per the Cal.com
  * design skill: white surface, 12px radius, subtle diffuse shadow,
  * no border.
  */
 export function LeaveWidgetCard() {
-  // Demo state for the widget visual — independent of the localStorage store.
+  // Demo state for the widget visual - independent of the localStorage store.
   const today = 11;
   const onLeaveDays = [3, 4, 5, 6, 7, 8, 9];
   const pendingDays = [16, 17, 18];
@@ -32,7 +32,7 @@ export function LeaveWidgetCard() {
 
   return (
     <Card padding={false} className="overflow-hidden">
-      {/* Faux browser top bar — like the Cal.com widget */}
+      {/* Faux browser top bar - like the Cal.com widget */}
       <div className="flex items-center justify-between px-3 h-9 border-b border-[var(--silver,#e5e7eb)]">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-[var(--slate,#6b7280)]/40" />

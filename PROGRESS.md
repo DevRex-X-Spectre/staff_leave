@@ -1,8 +1,8 @@
 # NAUB LMS — Build Progress
 
-> Last updated: 2026-07-06
+> Last updated: 2026-07-07
 
-## Status: PHASE 12 COMPLETE — dark mode removed (strict light theme) + `--ink` CSS variable fix (buttons now visible); all 29 routes compile clean
+## Status: PHASE 13 COMPLETE — all "HR" / "HR Manager" replaced with "Registrar" end-to-end; all em dashes removed from codebase
 
 ---
 
@@ -137,6 +137,36 @@ Two goals: (1) drop the public `/register` flow since auth is staff-ID driven; (
   - hod_approved → `#0c6cc7` (brand blue, 5.74:1)
 - [x] `app/globals.css` — `--ink` fallback updated `#101010` → `#0a0a0a` (in `::selection` + FullCalendar overrides)
 - [x] `components/ui/dialog.tsx`, `components/ui/button.tsx`, `components/ui/badge.tsx` — rechecked; all color combos now pass AA against the new tokens
+
+---
+
+## Phase 13 — HR → Registrar Rename + Em Dash Removal ✅ COMPLETE
+
+All user-facing references to "HR" / "HR Manager" replaced with "Registrar" throughout the application. Internal technical identifiers preserved (`hr_manager` role value, `user-hr` ID, `app/dashboard/hr/` route, `NAUB/HR/001` staff ID).
+
+### HR → Registrar replacements
+- `components/dashboard/topbar.tsx` — `ROLE_LABEL['hr_manager'] = 'Registrar'`
+- `components/ui/badge.tsx` — `RoleBadge` label for `hr_manager` → 'Registrar'
+- `app/(auth)/login/page.tsx` — demo account role 'HR Manager' → 'Registrar'; copy "HR / admin" → "Registrar / admin"
+- `app/dashboard/profile/profile-client.tsx` — `ROLE_LABEL` map
+- `app/dashboard/hr/hr-dashboard-client.tsx` — title, stat labels, card titles, empty states
+- `app/dashboard/hr/requests/hr-requests-client.tsx` — page header, card title, empty state, notification titles/messages
+- `app/dashboard/hod/hod-dashboard-client.tsx` — stat card "Awaiting HR approval" → "Awaiting Registrar approval"
+- `app/dashboard/hod/requests/hod-requests-client.tsx` — notification messages, toast success messages, comment
+- `app/dashboard/staff/staff-dashboard-client.tsx` — "Contact HR" → "Contact your Registrar"
+- `app/dashboard/staff/apply/apply-client.tsx` — document reminder copy
+- `app/dashboard/staff/rota/staff-rota-client.tsx` — empty state description
+- `app/dashboard/admin/staff/staff-client.tsx` — role filter/select options
+- `app/dashboard/admin/settings/page.tsx` — email event label
+- `app/dashboard/hod/calendar/hod-calendar-client.tsx` — calendar legend comment + label
+- `components/leave/leave-tracker.tsx` — stepper label + JSDoc comment
+- `middleware.ts` — public signup comment
+- `app/(auth)/register/page.tsx` — redirect comment
+- `lib/email.ts` — all email subject lines and body copy (rejection contact, HOD forwarding, Registrar final approval/rejection)
+
+### Em dash removal
+- All em dashes (`—`) replaced with contextually appropriate alternatives: commas, periods, or hyphens across 44+ files
+- No em dashes remain in any application source files
 
 ---
 

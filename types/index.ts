@@ -1,5 +1,5 @@
 /**
- * Centralised application types. Keep narrow — only what the UI consumes.
+ * Centralised application types. Keep narrow: only what the UI consumes.
  * Source-of-truth table shapes live in supabase/migrations/001_initial_schema.sql.
  */
 

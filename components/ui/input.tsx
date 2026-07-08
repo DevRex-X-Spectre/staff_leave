@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { type InputHTMLAttributes, forwardRef, type ReactNode } from 'react';
 
 /* -------------------------------------------------------------------------
-   Input — Cal.com style: 8px radius, paper background, silver border.
+   Input - Cal.com style: 8px radius, paper background, silver border.
    ------------------------------------------------------------------------- */
 export const Input = forwardRef<
   HTMLInputElement,
@@ -129,7 +129,7 @@ export function Label({
 }
 
 /* -------------------------------------------------------------------------
-   FormField — wraps Label + Input + error in one composable unit
+   FormField - wraps Label + Input + error in one composable unit
    ------------------------------------------------------------------------- */
 export function FormField({
   label,

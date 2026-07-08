@@ -165,7 +165,7 @@ export function EntitlementsClient() {
                                   onClick={() =>
                                     setAdjustTarget({
                                       entitlementId: ent.id,
-                                      name: `${u.full_name} — ${lt.name}`,
+                                      name: `${u.full_name} - ${lt.name}`,
                                       current: ent.total_days,
                                     })
                                   }
@@ -175,7 +175,7 @@ export function EntitlementsClient() {
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-[12px] text-[var(--text-tertiary)]">—</span>
+                              <span className="text-[12px] text-[var(--text-tertiary)]">-</span>
                             )}
                           </td>
                         );
@@ -222,7 +222,7 @@ export function EntitlementsClient() {
               disabled={delta === 0}
               onClick={handleAdjust}
             >
-              {submitting ? 'Saving…' : 'Save adjustment'}
+              {submitting ? 'Savingâ€¦' : 'Save adjustment'}
             </Button>
           </div>
         </Dialog>

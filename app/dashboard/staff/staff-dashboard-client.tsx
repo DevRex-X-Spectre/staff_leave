@@ -46,7 +46,7 @@ export function StaffDashboardClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {balances.length === 0 ? (
           <p className="text-[13px] text-[var(--text-secondary)] col-span-full">
-            No leave entitlements found. Contact HR.
+            No leave entitlements found. Contact your Registrar.
           </p>
         ) : (
           balances.map((b) => (
@@ -127,10 +127,10 @@ export function StaffDashboardClient() {
                 {applications.slice(0, 5).map((app) => (
                   <tr key={app.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-primary)]">
-                      {app.leave_type?.name ?? '—'}
+                      {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {formatDate(app.start_date)} – {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}

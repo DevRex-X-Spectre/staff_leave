@@ -4,7 +4,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { ProfileClient } from './profile-client';
 
 /**
- * /dashboard/profile — accessible to all four roles. Shows the user's info
+ * /dashboard/profile - accessible to all four roles. Shows the user's info
  * and lets them change their password.
  *
  * Phase 3 placeholder: layout/auth gating happens in app/dashboard/layout.tsx,

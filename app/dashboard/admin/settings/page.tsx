@@ -50,7 +50,7 @@ export default function AdminSettingsPage() {
               'Account approved / rejected',
               'Leave application submitted',
               'HOD approved / rejected',
-              'HR final approved / rejected',
+              'Registrar final approved / rejected',
               'Rota published',
             ].map((event) => (
               <div key={event} className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] last:border-0">

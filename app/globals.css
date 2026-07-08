@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 /* ============================================================
-   NAUB LMS — Design tokens (Cal.com style)
+   NAUB LMS - Design tokens (Cal.com style)
 
    STRICT LIGHT THEME. No dark mode. Every foreground/background
-   pair below passes WCAG AA (≥4.5:1 normal, ≥3:1 large).
+   pair below passes WCAG AA (>=4.5:1 normal, >=3:1 large).
 
    IMPORTANT: every color token used in arbitrary-value Tailwind
    classes (`bg-[var(--ink)]`, `text-[var(--text-primary)]`, etc.)
-   is defined as a plain CSS custom property in `:root` below —
+   is defined as a plain CSS custom property in `:root` below.
    NOT just inside `@theme`. `@theme` tokens are only consumed by
    Tailwind's utility generator and DO NOT create `var(--foo)`
    lookups. Define each one in `:root` to make sure arbitrary
@@ -25,11 +25,11 @@
   --bg-input: #ffffff;      /* Form input background */
   --bg-hover: #ebebeb;      /* Hover state on neutral surfaces */
 
-  /* ----- Text colours — every one passes AA on the surfaces above ----- */
-  --text-primary: #1f2937;   /* Slate-800 — 13.5:1 on white ✓ AAA */
-  --text-secondary: #475569; /* Slate-600 — 7.04:1 on white ✓ AA  */
-  --text-tertiary: #646464;  /* Neutral grey — 5.36:1 on white ✓ AA  */
-  --text-on-ink: #ffffff;    /* White — 19:1 on ink ✓ AAA             */
+  /* ----- Text colours - every one passes AA on the surfaces above ----- */
+  --text-primary: #1f2937;   /* Slate-800 - 13.5:1 on white check AAA */
+  --text-secondary: #475569; /* Slate-600 - 7.04:1 on white check AA  */
+  --text-tertiary: #646464;  /* Neutral grey - 5.36:1 on white check AA  */
+  --text-on-ink: #ffffff;    /* White - 19:1 on ink check AAA             */
 
   /* ----- Cal.com palette aliases (also defined in @theme for
             Tailwind utility generation) ----- */
@@ -48,15 +48,15 @@
   --border-focus: #0a0a0a;
 
   /* ----- Status / accent colours ----- */
-  --accent: #0c6cc7;        /* Brand blue — 5.74:1 on white ✓ AA */
+  --accent: #0c6cc7;        /* Brand blue - 5.74:1 on white check AA */
   --accent-bg: #eff6fe;
-  --success: #15803d;       /* 4.66:1 on success-bg ✓ AA           */
+  --success: #15803d;       /* 4.66:1 on success-bg check AA           */
   --success-bg: #f0fdf4;
-  --warning: #a16207;       /* 4.83:1 on warning-bg ✓ AA           */
+  --warning: #a16207;       /* 4.83:1 on warning-bg check AA           */
   --warning-bg: #fefce8;
-  --danger: #b91c1c;        /* 6.79:1 on danger-bg  ✓ AA           */
+  --danger: #b91c1c;        /* 6.79:1 on danger-bg  check AA           */
   --danger-bg: #fef2f2;
-  --info: #0c6cc7;          /* 5.74:1 on info-bg    ✓ AA           */
+  --info: #0c6cc7;          /* 5.74:1 on info-bg    check AA           */
   --info-bg: #eff6fe;
 
   /* ----- Shadows ----- */
@@ -84,7 +84,7 @@
   --text-heading-lg: 48px;
   --text-display: 64px;
 
-  /* Spacing — compact density */
+  /* Spacing - compact density */
   --spacing-1: 4px;
   --spacing-1_5: 6px;
   --spacing-2: 8px;
@@ -98,7 +98,7 @@
   --spacing-10: 40px;
   --spacing-12: 48px;
 
-  /* Radii — pills on buttons, 12px on cards, 8px on inputs */
+  /* Radii - pills on buttons, 12px on cards, 8px on inputs */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -211,7 +211,7 @@ button {
   border-radius: var(--radius-md);
 }
 
-/* Custom scrollbar — subtle */
+/* Custom scrollbar - subtle */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -228,7 +228,7 @@ button {
   background: var(--border-default);
 }
 
-/* Native <dialog> — center it on screen with proper spacing on mobile. */
+/* Native <dialog> - center it on screen with proper spacing on mobile. */
 dialog {
   margin: auto;
   background: transparent;
@@ -258,7 +258,7 @@ dialog::backdrop {
 }
 
 /* ============================================================
-   Shadow utilities — dark drop shadow on light surfaces.
+   Shadow utilities - dark drop shadow on light surfaces.
    ============================================================ */
 .shadow-card {
   box-shadow: rgba(var(--shadow-color), var(--shadow-soft)) 0px 4px 8px 0px;
@@ -286,7 +286,7 @@ dialog::backdrop {
   box-shadow: rgba(var(--shadow-color), 0.12) 0px 24px 48px -12px;
 }
 
-/* FullCalendar overrides — keep monochrome */
+/* FullCalendar overrides - keep monochrome */
 .fc {
   --fc-border-color: var(--border-subtle);
   --fc-page-bg-color: var(--bg-card);

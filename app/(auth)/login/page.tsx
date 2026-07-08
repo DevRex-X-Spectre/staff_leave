@@ -20,7 +20,7 @@ type DemoAccount = {
 const DEMO_ACCOUNTS: DemoAccount[] = [
   { staffId: 'NAUB/ADM/001', role: 'Admin', name: 'System Administrator' },
   { staffId: 'NAUB/CS/001', role: 'HOD', name: 'Dr. Chukwuma Okeke' },
-  { staffId: 'NAUB/HR/001', role: 'HR Manager', name: 'Amina Bello' },
+  { staffId: 'NAUB/REG/001', role: 'Registrar', name: 'Amina Bello' },
   { staffId: 'NAUB/CS/010', role: 'Staff', name: 'Engr. Samuel Adekunle' },
 ];
 
@@ -180,8 +180,8 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-[13px] text-[var(--text-secondary)] mt-6">
-            Staff accounts are provisioned by your HR / admin. If you already
-            have credentials, sign in above.
+            Staff accounts are provisioned by your Registrar / admin. If you
+            already have credentials, sign in above.
           </p>
         </div>
       </div>

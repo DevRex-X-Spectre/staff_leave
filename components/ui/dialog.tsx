@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 /* -------------------------------------------------------------------------
-   Dialog — minimal accessible modal using native <dialog>.
+   Dialog - minimal accessible modal using native <dialog>.
    ------------------------------------------------------------------------- */
 export function Dialog({
   open,
@@ -94,7 +94,7 @@ export function Dialog({
 }
 
 /* -------------------------------------------------------------------------
-   ConfirmDialog — dialog with a clear destructive / confirm action pattern.
+   ConfirmDialog - dialog with a clear destructive / confirm action pattern.
    ------------------------------------------------------------------------- */
 export function ConfirmDialog({
   open,

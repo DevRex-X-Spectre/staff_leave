@@ -133,7 +133,7 @@ export function AdminApprovalsClient() {
             title="No requests"
             description={
               filter === 'pending'
-                ? 'All caught up — no pending approvals.'
+                ? 'All caught up - no pending approvals.'
                 : 'No requests found.'
             }
           />
@@ -158,19 +158,19 @@ export function AdminApprovalsClient() {
                 {filtered.map((req) => (
                   <tr key={req.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                     <td className="py-3 px-3 sm:px-4 text-[13px] font-medium text-[var(--text-primary)] whitespace-nowrap">
-                      {req.user?.full_name ?? '—'}
+                      {req.user?.full_name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {req.user?.email ?? ''}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {req.user?.staff_id ?? '—'}
+                      {req.user?.staff_id ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4">
                       <RoleBadge role={req.requested_role} />
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {req.department?.name ?? '—'}
+                      {req.department?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[12px] text-[var(--text-tertiary)]">
                       {timeAgo(req.created_at)}

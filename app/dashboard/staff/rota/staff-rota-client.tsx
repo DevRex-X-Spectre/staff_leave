@@ -20,7 +20,7 @@ type DayBucket = {
   hasApproved: boolean;
 };
 
-const MAX_CONCURRENT = 2; // Visual cap — at or above this paints red-orange
+const MAX_CONCURRENT = 2; // Visual cap - at or above this paints red-orange
 const COLOR_LIGHT = '#6b7280';
 const COLOR_HEAVY = '#dc2626';
 
@@ -148,7 +148,7 @@ export function StaffRotaClient() {
           <EmptyState
             icon={Info}
             title="No department assigned"
-            description="You are not currently assigned to a department. Contact HR to be added."
+            description="You are not currently assigned to a department. Contact your Registrar to be added."
           />
         </Card>
       </div>
@@ -216,7 +216,7 @@ export function StaffRotaClient() {
         <div className="p-6 border-b border-[var(--border-subtle)]">
           <CardTitle>Departmental Rota</CardTitle>
           <CardDescription className="mt-1">
-            Only the number of staff on leave is shown per day — individual names are
+            Only the number of staff on leave is shown per day - individual names are
             hidden to protect privacy.
           </CardDescription>
         </div>

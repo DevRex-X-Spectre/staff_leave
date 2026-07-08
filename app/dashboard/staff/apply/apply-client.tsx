@@ -96,7 +96,7 @@ export function ApplyLeaveClient() {
       let conflict = false;
       if (deptId) {
         const conflictingSlots = users
-          // Note: a real implementation would check Slots by department — keep simple
+          // Note: a real implementation would check Slots by department - keep simple
           .filter((u) => u.role === 'staff' && u.department_id === deptId);
         conflict = false; // simplified: full rota conflict detection can live in HOD view
         void conflictingSlots;
@@ -260,7 +260,7 @@ export function ApplyLeaveClient() {
             <CardDescription className="mb-5">Provide a brief explanation of why you need this leave.</CardDescription>
             <FormField label="Reason" error={errors.reason?.message}>
               <Textarea
-                placeholder="e.g. Annual family vacation, medical appointment…"
+                placeholder="e.g. Annual family vacation, medical appointmentâ€¦"
                 rows={4}
                 {...register('reason')}
               />
@@ -268,7 +268,7 @@ export function ApplyLeaveClient() {
             {selectedType?.requires_document && (
               <div className="mt-4 p-3 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)]">
                 <p className="text-[12px] text-[var(--warning)]">
-                  This leave type requires a supporting document. Please bring your document to HR after approval.
+                  This leave type requires a supporting document. Please bring your document to the Registrar after approval.
                 </p>
               </div>
             )}
@@ -281,8 +281,8 @@ export function ApplyLeaveClient() {
             <CardDescription className="mb-5">Review your application before submitting.</CardDescription>
             <div className="space-y-3">
               {[
-                ['Leave type', selectedType?.name ?? '—'],
-                ['Department', department?.name ?? '—'],
+                ['Leave type', selectedType?.name ?? '-'],
+                ['Department', department?.name ?? '-'],
                 ['Start date', startDate],
                 ['End date', endDate],
                 ['Total days', `${days} day${days !== 1 ? 's' : ''}`],
@@ -311,7 +311,7 @@ export function ApplyLeaveClient() {
             </Button>
           ) : (
             <Button variant="ink" onClick={handleSubmit(onSubmit)} disabled={submitting}>
-              {submitting ? 'Submitting…' : 'Submit application'}
+              {submitting ? 'Submittingâ€¦' : 'Submit application'}
               <CheckCircle size={15} />
             </Button>
           )}

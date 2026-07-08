@@ -20,7 +20,7 @@ import {
 import { hydrateStore } from '@/lib/local/store';
 
 /**
- * AuthProvider — supplies the currently signed-in user to the React tree.
+ * AuthProvider - supplies the currently signed-in user to the React tree.
  *
  * Lifecycle:
  *  - On mount, hydrates the localStorage store (seeds if empty) and
@@ -47,10 +47,10 @@ type AuthContextValue = {
     currentPassword: string,
     newPassword: string
   ) => Promise<{ ok: true } | { ok: false; message: string }>;
-  /** Demo helper — switch to a different seeded user (topbar role-switcher). */
+  /** Demo helper - switch to a different seeded user (topbar role-switcher). */
   switchUser: (userId: string) => User | null;
   /** Force a re-read of currentUser from storage (used after a mutation that
-   *  could affect the session — e.g. role change by admin). */
+   *  could affect the session - e.g. role change by admin). */
   refresh: () => void;
 };
 

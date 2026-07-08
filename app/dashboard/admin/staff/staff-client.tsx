@@ -69,7 +69,7 @@ export function AdminStaffClient() {
           <option value="">All roles</option>
           <option value="admin">Admin</option>
           <option value="hod">HOD</option>
-          <option value="hr_manager">HR Manager</option>
+          <option value="hr_manager">Registrar</option>
           <option value="staff">Staff</option>
         </Select>
       </div>
@@ -108,7 +108,7 @@ export function AdminStaffClient() {
                       <RoleBadge role={u.role} />
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {dept?.name ?? '—'}
+                      {dept?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4">
                       <span
@@ -136,7 +136,7 @@ export function AdminStaffClient() {
                         >
                           <option value="admin">Admin</option>
                           <option value="hod">HOD</option>
-                          <option value="hr_manager">HR</option>
+                          <option value="hr_manager">Registrar</option>
                           <option value="staff">Staff</option>
                         </select>
                         <Button

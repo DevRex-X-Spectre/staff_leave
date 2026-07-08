@@ -20,9 +20,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'NAUB LMS — Staff Leave Management System',
+  title: 'NAUB LMS - Staff Leave Management System',
   description:
-    'Nigerian Army University, Biu — Professional staff leave management system.',
+    'Nigerian Army University, Biu - Professional staff leave management system.',
 };
 
 export default function RootLayout({

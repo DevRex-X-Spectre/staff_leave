@@ -12,7 +12,7 @@ export function dashboardPathFor(role: UserRole): string {
     case 'hod':
       return '/dashboard/hod';
     case 'hr_manager':
-      return '/dashboard/hr';
+      return '/dashboard/registrar';
     case 'staff':
       return '/dashboard/staff';
     default:

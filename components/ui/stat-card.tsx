@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
 /* -------------------------------------------------------------------------
-   StatCard — summary card used on dashboard overview pages.
+   StatCard - summary card used on dashboard overview pages.
    ------------------------------------------------------------------------- */
 export function StatCard({
   label,
@@ -64,7 +64,7 @@ export function StatCard({
 }
 
 /* -------------------------------------------------------------------------
-   Skeleton — placeholder while data loads.
+   Skeleton - placeholder while data loads.
    ------------------------------------------------------------------------- */
 export function Skeleton({
   className,
@@ -84,7 +84,7 @@ export function Skeleton({
 }
 
 /* -------------------------------------------------------------------------
-   EmptyState — friendly placeholder for empty tables/lists.
+   EmptyState - friendly placeholder for empty tables/lists.
    ------------------------------------------------------------------------- */
 export function EmptyState({
   icon: Icon,
@@ -129,7 +129,7 @@ export function EmptyState({
 }
 
 /* -------------------------------------------------------------------------
-   ProgressBar — used in leave balance cards.
+   ProgressBar - used in leave balance cards.
    ------------------------------------------------------------------------- */
 export function ProgressBar({
   value,
@@ -159,7 +159,7 @@ export function ProgressBar({
 }
 
 /* -------------------------------------------------------------------------
-   PageHeader — consistent page title block.
+   PageHeader - consistent page title block.
    ------------------------------------------------------------------------- */
 export function PageHeader({
   title,

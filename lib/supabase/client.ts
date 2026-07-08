@@ -7,7 +7,7 @@ let browserClient: SupabaseClient | null = null;
 /**
  * Browser-side Supabase client. Reads NEXT_PUBLIC_SUPABASE_URL and the
  * anon key from the environment. In demo mode this returns a stub client
- * — UI code should still call supabase.from(...) which throws a clear error
+ * - UI code should still call supabase.from(...) which throws a clear error
  * directing the developer to configure env vars.
  */
 export function getSupabaseBrowserClient(): SupabaseClient {

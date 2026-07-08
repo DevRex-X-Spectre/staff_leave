@@ -15,7 +15,7 @@ import { KeyRound, ShieldCheck } from 'lucide-react';
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Administrator',
   hod: 'Head of Department',
-  hr_manager: 'HR Manager',
+  hr_manager: 'Registrar',
   staff: 'Staff Member',
 };
 
@@ -95,7 +95,7 @@ export function ProfileClient({ user }: { user: User }) {
               Staff ID
             </dt>
             <dd className="mt-0.5 text-[var(--text-primary)] font-medium">
-              {user.staff_id ?? '—'}
+              {user.staff_id ?? '-'}
             </dd>
           </div>
           <div>
@@ -111,7 +111,7 @@ export function ProfileClient({ user }: { user: User }) {
               Phone
             </dt>
             <dd className="mt-0.5 text-[var(--text-primary)] truncate">
-              {user.phone ?? '—'}
+              {user.phone ?? '-'}
             </dd>
           </div>
           <div>

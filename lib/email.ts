@@ -20,7 +20,7 @@ async function send(args: {
   text?: string;
 }) {
   if (!client) {
-    // Demo fallback — log instead of send. Real emails require RESEND_API_KEY.
+    // Demo fallback - log instead of send. Real emails require RESEND_API_KEY.
     if (process.env.NODE_ENV !== 'production') {
       // eslint-disable-next-line no-console
       console.info(
@@ -97,7 +97,7 @@ export async function sendAccountRejected(
       `<p>Hello ${name},</p>
        <p>Unfortunately your NAUB LMS account registration was not approved.</p>
        <p style="background:#fef2f2;border:1px solid #fecaca;padding:12px 16px;border-radius:8px;color:#991b1b"><strong>Admin comment:</strong> ${comment}</p>
-       <p>If you believe this is a mistake, please contact your HR office.</p>`
+       <p>If you believe this is a mistake, please contact your Registrar office.</p>`
     ),
   });
 }
@@ -144,7 +144,7 @@ export async function sendHodDecision(args: {
     html: shell(
       args.approved ? 'HOD approved your leave' : 'Leave request rejected',
       `<p>Hello ${args.applicant.full_name},</p>
-       <p>${args.approved ? 'Your HOD has approved your leave request. It has been forwarded to HR for final approval.' : 'Your leave request was not approved by your HOD.'}</p>
+       <p>${args.approved ? 'Your HOD has approved your leave request. It has been forwarded to the Registrar for final approval.' : 'Your leave request was not approved by your HOD.'}</p>
        ${args.comment ? `<p style="background:#f4f4f4;padding:12px 16px;border-radius:8px"><strong>Comment:</strong> ${args.comment}</p>` : ''}
        ${args.approved && args.hr ? `<p>Final approver: ${args.hr.full_name}</p>` : ''}
        ${ctaButton(`${APP_URL}/dashboard/staff/my-leaves`, 'View request')}`
@@ -164,18 +164,18 @@ export async function sendHrDecision(args: {
     to: args.applicant.email,
     subject: args.approved
       ? `Leave fully approved: ${args.leaveType.name}`
-      : `Leave rejected by HR: ${args.leaveType.name}`,
+      : `Leave rejected by Registrar: ${args.leaveType.name}`,
     html: shell(
       args.approved ? 'Leave approved' : 'Leave request rejected',
       `<p>Hello ${args.applicant.full_name},</p>
-       <p>${args.approved ? 'Great news — HR has approved your leave request.' : 'HR has rejected your leave request.'}</p>
+       <p>${args.approved ? 'Great news: the Registrar has approved your leave request.' : 'The Registrar has rejected your leave request.'}</p>
        <table style="width:100%;border-collapse:collapse;margin:16px 0">
          <tr><td style="padding:8px 0;color:#6b7280">Leave type</td><td style="padding:8px 0;font-weight:500">${args.leaveType.name}</td></tr>
          <tr><td style="padding:8px 0;color:#6b7280">Start date</td><td style="padding:8px 0;font-weight:500">${args.application.start_date}</td></tr>
          <tr><td style="padding:8px 0;color:#6b7280">End date</td><td style="padding:8px 0;font-weight:500">${args.application.end_date}</td></tr>
          <tr><td style="padding:8px 0;color:#6b7280">Days</td><td style="padding:8px 0;font-weight:500">${args.application.total_days}</td></tr>
        </table>
-       ${args.comment ? `<p style="background:#f4f4f4;padding:12px 16px;border-radius:8px"><strong>HR comment:</strong> ${args.comment}</p>` : ''}
+       ${args.comment ? `<p style="background:#f4f4f4;padding:12px 16px;border-radius:8px"><strong>Registrar comment:</strong> ${args.comment}</p>` : ''}
        ${ctaButton(`${APP_URL}/dashboard/staff/my-leaves`, 'View request')}`
     ),
   });

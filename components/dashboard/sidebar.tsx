@@ -26,7 +26,7 @@ import { useState } from 'react';
 import type { UserRole } from '@/types';
 
 /* -------------------------------------------------------------------------
-   Sidebar nav items — role-aware.
+   Sidebar nav items - role-aware.
    ------------------------------------------------------------------------- */
 type NavItem = {
   label: string;
@@ -99,25 +99,25 @@ const HOD_NAV: NavGroup[] = [
   },
 ];
 
-const HR_NAV: NavGroup[] = [
+const REGISTRAR_NAV: NavGroup[] = [
   {
     group: 'Overview',
     items: [
-      { label: 'Dashboard', href: '/dashboard/hr', icon: LayoutDashboard },
+      { label: 'Dashboard', href: '/dashboard/registrar', icon: LayoutDashboard },
     ],
   },
   {
     group: 'Leave Requests',
     items: [
-      { label: 'Awaiting Approval', href: '/dashboard/hr/requests', icon: Clock },
-      { label: 'All Applications', href: '/dashboard/hr/all-applications', icon: FileText },
+      { label: 'Awaiting Approval', href: '/dashboard/registrar/requests', icon: Clock },
+      { label: 'All Applications', href: '/dashboard/registrar/all-applications', icon: FileText },
     ],
   },
   {
     group: 'Management',
     items: [
-      { label: 'Leave Entitlements', href: '/dashboard/hr/entitlements', icon: BarChart3 },
-      { label: 'Reports', href: '/dashboard/hr/reports', icon: BarChart3 },
+      { label: 'Leave Entitlements', href: '/dashboard/registrar/entitlements', icon: BarChart3 },
+      { label: 'Reports', href: '/dashboard/registrar/reports', icon: BarChart3 },
     ],
   },
   {
@@ -158,7 +158,7 @@ function navForRole(role: UserRole): NavGroup[] {
     case 'hod':
       return HOD_NAV;
     case 'hr_manager':
-      return HR_NAV;
+      return REGISTRAR_NAV;
     case 'staff':
       return STAFF_NAV;
   }

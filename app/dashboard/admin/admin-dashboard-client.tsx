@@ -71,10 +71,10 @@ export function AdminDashboardClient() {
                 <div key={req.id} className="py-3 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[14px] font-medium text-[var(--text-primary)]">
-                      {req.user?.full_name ?? '—'}
+                      {req.user?.full_name ?? '-'}
                     </p>
                     <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">
-                      {req.user?.email ?? ''} · {req.requested_role}
+                      {req.user?.email ?? ''} Â· {req.requested_role}
                     </p>
                     <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
                       {timeAgo(req.created_at)}

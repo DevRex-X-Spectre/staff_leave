@@ -31,15 +31,15 @@ type CalendarEvent = {
   };
 };
 
-/* Event palette — all foreground/background pairs are AA-safe.
+/* Event palette - all foreground/background pairs are AA-safe.
    Each color shows white text. White-on-{color} contrasts verified:
-     --rota bg #475569 : 6.12:1 ✓ AA
-     --approved bg #1f2937 : 14.9:1 ✓ AAA
-     --hod_approved bg #0c6cc7 : 5.74:1 ✓ AA */
+     --rota bg #475569 : 6.12:1 âœ“ AA
+     --approved bg #1f2937 : 14.9:1 âœ“ AAA
+     --hod_approved bg #0c6cc7 : 5.74:1 âœ“ AA */
 const EVENT_COLORS = {
-  rota: { bg: '#475569', text: '#ffffff' },          // Slate-600 — rota slots
-  approved: { bg: '#1f2937', text: '#ffffff' },      // Slate-800 — fully approved
-  hod_approved: { bg: '#0c6cc7', text: '#ffffff' },  // Brand blue — pending HR
+  rota: { bg: '#475569', text: '#ffffff' },          // Slate-600 - rota slots
+  approved: { bg: '#1f2937', text: '#ffffff' },      // Slate-800 - fully approved
+  hod_approved: { bg: '#0c6cc7', text: '#ffffff' },  // Brand blue - pending Registrar
 };
 
 // Look up user/leave-type names from a small dict passed via window context.
@@ -61,11 +61,11 @@ export function HodCalendarClient({
   useEffect(() => {
     const events: CalendarEvent[] = [];
 
-    // Rota slots — grey
+    // Rota slots - grey
     slots.forEach((slot) => {
       const leaveType = slot.leave_type_id ? `Leave (${slot.leave_type_id})` : 'Leave';
       events.push({
-        title: `Staff — ${leaveType}`,
+        title: `Staff - ${leaveType}`,
         start: slot.slot_start,
         end: slot.slot_end,
         color: EVENT_COLORS.rota.bg,
@@ -88,7 +88,7 @@ export function HodCalendarClient({
           app.status === 'approved' ? EVENT_COLORS.approved : EVENT_COLORS.hod_approved;
 
         events.push({
-          title: `${app.applicant?.full_name ?? 'Staff'} — ${leaveType}`,
+          title: `${app.applicant?.full_name ?? 'Staff'} - ${leaveType}`,
           start: app.start_date,
           end: app.end_date,
           color: colors.bg,
@@ -165,7 +165,7 @@ export function HodCalendarClient({
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: EVENT_COLORS.hod_approved.bg }} />
           <span className="text-[13px] text-[var(--text-secondary)]">
-            Pending HR ({legend.hod_approved})
+            Pending Registrar ({legend.hod_approved})
           </span>
         </div>
       </div>

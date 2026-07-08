@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 /* -------------------------------------------------------------------------
-   Card — 12px radius, white background, subtle shadow. No border.
+   Card - 12px radius, white background, subtle shadow. No border.
    Optional hoverable variant lifts to the Cal.com hover shadow.
    ------------------------------------------------------------------------- */
 export function Card({

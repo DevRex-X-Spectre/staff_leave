@@ -19,7 +19,7 @@ export const DEMO_COOKIE_NAME = 'naub-demo-user';
 export const DEMO_ROLE_COOKIE_NAME = 'naub-demo-role';
 
 /** Default password assigned to every newly-seeded and newly-registered user.
- *  Documented as demo-only — changeable from the user's profile. */
+ *  Documented as demo-only - changeable from the user's profile. */
 export const DEFAULT_PASSWORD = 'NAUB@2026';
 
 /** Schema version baked into the stored blob; bump if the data shape changes. */

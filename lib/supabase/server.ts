@@ -6,7 +6,7 @@ import { isDemoMode } from '@/lib/utils';
 
 /**
  * Per-request Supabase server client. Reads/writes session cookies.
- * Always create a new instance per request — never cache across requests.
+ * Always create a new instance per request - never cache across requests.
  */
 export async function getSupabaseServerClient(): Promise<SupabaseClient> {
   if (isDemoMode()) {
@@ -30,7 +30,7 @@ export async function getSupabaseServerClient(): Promise<SupabaseClient> {
             );
           } catch {
             // Server Components cannot set cookies. The auth middleware (proxy.ts)
-            // handles session refresh — we silently ignore here.
+            // handles session refresh - we silently ignore here.
           }
         },
       },

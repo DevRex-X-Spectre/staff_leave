@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import type { LeaveStatus } from '@/types';
 
 /* -------------------------------------------------------------------------
-   StatusBadge — Cal.com-style pill for leave application status.
+   StatusBadge - Cal.com-style pill for leave application status.
    ------------------------------------------------------------------------- */
 const STATUS_CONFIG: Record<
   LeaveStatus,
@@ -68,7 +68,7 @@ const ROLE_CONFIG: Record<string, { label: string; className: string }> = {
     className: 'bg-[var(--color-action-blue)] text-white',
   },
   hr_manager: {
-    label: 'HR',
+    label: 'Registrar',
     className: 'bg-[var(--info-bg)] text-[var(--info)] border border-[var(--info)]/20',
   },
   staff: {

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { Clock, CheckCircle, XCircle, CalendarDays, FileText } from 'lucide-react';
 import { useApplications } from '@/lib/local/data-hooks';
 
-export function HrDashboardClient() {
+export function RegistrarDashboardClient() {
   const allApps = useApplications();
 
   const { pending, approved, rejected, onLeave } = useMemo(() => {
@@ -29,25 +29,25 @@ export function HrDashboardClient() {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="HR Dashboard" description="Leave management overview." />
+      <PageHeader title="Registrar Dashboard" description="Leave management overview." />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <StatCard label="Awaiting HR approval" value={pending.length} icon={Clock} />
+        <StatCard label="Awaiting Registrar approval" value={pending.length} icon={Clock} />
         <StatCard label="Approved (all time)" value={approved.length} icon={CheckCircle} />
         <StatCard label="Rejected (all time)" value={rejected.length} icon={XCircle} />
         <StatCard label="Currently on leave" value={onLeave.length} icon={CalendarDays} />
       </div>
 
-      {/* Pending HR approval */}
+      {/* Pending Registrar approval */}
       <Card>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <CardTitle>Applications awaiting HR approval</CardTitle>
+            <CardTitle>Applications awaiting Registrar approval</CardTitle>
             <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">
               These have been approved by HOD and need your final sign-off.
             </p>
           </div>
-          <Link href="/dashboard/hr/requests">
+          <Link href="/dashboard/registrar/requests">
             <Button variant="outline" size="sm">Review all</Button>
           </Link>
         </div>
@@ -56,7 +56,7 @@ export function HrDashboardClient() {
           <div className="py-10 text-center">
             <FileText size={28} strokeWidth={1} className="mx-auto text-[var(--text-tertiary)] mb-3" />
             <p className="text-[13px] text-[var(--text-secondary)]">
-              No applications awaiting HR approval.
+              No applications awaiting Registrar approval.
             </p>
           </div>
         ) : (
@@ -78,16 +78,16 @@ export function HrDashboardClient() {
                 {pending.slice(0, 8).map((app) => (
                   <tr key={app.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                     <td className="py-3 px-3 sm:px-4 text-[13px] font-medium text-[var(--text-primary)] whitespace-nowrap">
-                      {app.applicant?.full_name ?? '—'}
+                      {app.applicant?.full_name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {app.department?.name ?? '—'}
+                      {app.department?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {app.leave_type?.name ?? '—'}
+                      {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {formatDate(app.start_date)} – {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}
@@ -96,7 +96,7 @@ export function HrDashboardClient() {
                       <StatusBadge status={app.status} />
                     </td>
                     <td className="py-3 px-3 sm:px-4">
-                      <Link href="/dashboard/hr/requests">
+                      <Link href="/dashboard/registrar/requests">
                         <Button variant="outline" size="sm">Review</Button>
                       </Link>
                     </td>

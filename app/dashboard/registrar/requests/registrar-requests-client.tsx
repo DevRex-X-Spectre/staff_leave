@@ -23,7 +23,7 @@ import { CheckCircle, XCircle } from 'lucide-react';
 import type { LeaveStatus } from '@/types';
 import { toast } from 'sonner';
 
-export function HrRequestsClient() {
+export function RegistrarRequestsClient() {
   const { currentUser } = useAuth();
   const apps = useApplications({ status: ['hod_approved'] });
   const [selected, setSelected] = useState<string | null>(null);
@@ -79,7 +79,7 @@ export function HrRequestsClient() {
             message:
               decision === 'approved'
                 ? `Your ${lt.name} request has been fully approved.`
-                : comment || 'HR did not approve the leave.',
+                : comment || 'The Registrar did not approve the leave.',
             type: decision === 'approved' ? 'leave_approved' : 'leave_rejected',
             is_read: false,
             related_application_id: appId,
@@ -88,7 +88,7 @@ export function HrRequestsClient() {
           if (dept?.hod_id) {
             Notifications.insert({
               user_id: dept.hod_id,
-              title: decision === 'approved' ? 'Leave fully approved' : 'Leave rejected at HR',
+              title: decision === 'approved' ? 'Leave fully approved' : 'Leave rejected at Registrar',
               message: `${applicant.full_name}'s ${lt.name} was ${nextStatus}.`,
               type: 'leave_approved',
               is_read: false,
@@ -111,18 +111,18 @@ export function HrRequestsClient() {
   return (
     <div className="animate-fade-in">
       <PageHeader
-        title="HR Approval Queue"
-        description="Final approval step — these requests have been approved by HOD."
+        title="Registrar Approval Queue"
+        description="Final approval step. These requests have been approved by HOD."
       />
 
       <Card>
-        <CardTitle className="mb-4">Awaiting HR approval ({apps.length})</CardTitle>
+        <CardTitle className="mb-4">Awaiting Registrar approval ({apps.length})</CardTitle>
 
         {apps.length === 0 ? (
           <EmptyState
             icon={CheckCircle}
             title="All caught up"
-            description="No applications awaiting HR approval."
+            description="No applications awaiting Registrar approval."
           />
         ) : (
           <div className="overflow-x-auto -mx-4 sm:-mx-6 lg:mx-0">
@@ -145,16 +145,16 @@ export function HrRequestsClient() {
                 {apps.map((app) => (
                   <tr key={app.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                     <td className="py-3 px-3 sm:px-4 text-[13px] font-medium text-[var(--text-primary)] whitespace-nowrap">
-                      {app.applicant?.full_name ?? '—'}
+                      {app.applicant?.full_name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {app.department?.name ?? '—'}
+                      {app.department?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {app.leave_type?.name ?? '—'}
+                      {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {formatDate(app.start_date)} – {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}
@@ -204,11 +204,11 @@ export function HrRequestsClient() {
           <div className="space-y-4">
             <div className="p-3 bg-[var(--bg-subtle)] rounded-[var(--radius-md)]">
               <p className="text-[13px] font-medium text-[var(--text-primary)]">
-                {selectedApp.applicant?.full_name} · {selectedApp.department?.name}
+                {selectedApp.applicant?.full_name} Â· {selectedApp.department?.name}
               </p>
               <p className="text-[12px] text-[var(--text-secondary)]">
-                {selectedApp.leave_type?.name} · {formatDate(selectedApp.start_date)} –{' '}
-                {formatDate(selectedApp.end_date)} · {selectedApp.total_days} days
+                {selectedApp.leave_type?.name} Â· {formatDate(selectedApp.start_date)} â€“{' '}
+                {formatDate(selectedApp.end_date)} Â· {selectedApp.total_days} days
               </p>
             </div>
             <FormField
@@ -219,8 +219,8 @@ export function HrRequestsClient() {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={
                   action === 'reject'
-                    ? 'Enter reason for rejection…'
-                    : 'Optional comment…'
+                    ? 'Enter reason for rejectionâ€¦'
+                    : 'Optional commentâ€¦'
                 }
                 rows={3}
               />
@@ -240,7 +240,7 @@ export function HrRequestsClient() {
                 handleDecision(selectedApp.id, action as 'approved' | 'rejected')
               }
             >
-              {isPending ? 'Processing…' : action === 'approve' ? 'Confirm approval' : 'Confirm rejection'}
+              {isPending ? 'Processingâ€¦' : action === 'approve' ? 'Confirm approval' : 'Confirm rejection'}
             </Button>
           </div>
         </Dialog>

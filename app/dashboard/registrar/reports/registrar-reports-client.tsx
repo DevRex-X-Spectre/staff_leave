@@ -12,7 +12,7 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
-export function HrReportsClient() {
+export function RegistrarReportsClient() {
   const apps = useApplications();
   const departments = useDepartments();
   const [filterDept, setFilterDept] = useState('');
@@ -32,10 +32,10 @@ export function HrReportsClient() {
 
   const exportExcel = () => {
     const rows = filtered.map((a) => ({
-      Staff: a.applicant?.full_name ?? '—',
-      Email: a.applicant?.email ?? '—',
-      Department: a.department?.name ?? '—',
-      'Leave Type': a.leave_type?.name ?? '—',
+      Staff: a.applicant?.full_name ?? '-',
+      Email: a.applicant?.email ?? '-',
+      Department: a.department?.name ?? '-',
+      'Leave Type': a.leave_type?.name ?? '-',
       'Start Date': a.start_date,
       'End Date': a.end_date,
       'Days': a.total_days,
@@ -55,15 +55,15 @@ export function HrReportsClient() {
     doc.setFontSize(9);
     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 28);
     const rows = filtered.map((a) => [
-      a.applicant?.full_name ?? '—',
-      a.department?.name ?? '—',
-      a.leave_type?.name ?? '—',
+      a.applicant?.full_name ?? '-',
+      a.department?.name ?? '-',
+      a.leave_type?.name ?? '-',
       a.start_date,
       a.end_date,
       String(a.total_days),
       a.status,
     ]);
-    // @ts-expect-error — autotable extension type
+    // @ts-expect-error - autotable extension type
     doc.autoTable({
       head: [['Staff', 'Department', 'Leave Type', 'Start', 'End', 'Days', 'Status']],
       body: rows,
@@ -176,13 +176,13 @@ export function HrReportsClient() {
                 {filtered.map((app) => (
                   <tr key={app.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                     <td className="py-3 px-3 sm:px-4 text-[13px] font-medium text-[var(--text-primary)] whitespace-nowrap">
-                      {app.applicant?.full_name ?? '—'}
+                      {app.applicant?.full_name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {app.department?.name ?? '—'}
+                      {app.department?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
-                      {app.leave_type?.name ?? '—'}
+                      {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
                       {app.start_date}

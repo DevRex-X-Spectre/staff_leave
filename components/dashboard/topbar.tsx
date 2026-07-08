@@ -20,7 +20,7 @@ import Link from 'next/link';
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Administrator',
   hod: 'Head of Department',
-  hr_manager: 'HR Manager',
+  hr_manager: 'Registrar',
   staff: 'Staff Member',
 };
 

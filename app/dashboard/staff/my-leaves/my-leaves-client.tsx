@@ -75,10 +75,10 @@ export function MyLeavesClient({ userId }: { userId: string }) {
                     onClick={() => setSelected(app.id)}
                   >
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-primary)]">
-                      {app.leave_type?.name ?? '—'}
+                      {app.leave_type?.name ?? '-'}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                      {formatDate(app.start_date)} – {formatDate(app.end_date)}
+                      {formatDate(app.start_date)} â€“ {formatDate(app.end_date)}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">
                       {app.total_days}
@@ -129,8 +129,8 @@ export function MyLeavesClient({ userId }: { userId: string }) {
 
             <div className="space-y-2.5">
               {[
-                ['Leave type', selectedApp.leave_type?.name ?? '—'],
-                ['Department', selectedApp.department?.name ?? '—'],
+                ['Leave type', selectedApp.leave_type?.name ?? '-'],
+                ['Department', selectedApp.department?.name ?? '-'],
                 ['Start date', formatDate(selectedApp.start_date)],
                 ['End date', formatDate(selectedApp.end_date)],
                 ['Total days', String(selectedApp.total_days)],
@@ -158,7 +158,7 @@ export function MyLeavesClient({ userId }: { userId: string }) {
             {selectedApp.rota_conflict && (
               <div className="p-3 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)]">
                 <p className="text-[12px] text-[var(--warning)]">
-                  ⚠️ This application conflicts with the published departmental leave rota.
+                  âš ï¸ This application conflicts with the published departmental leave rota.
                 </p>
               </div>
             )}

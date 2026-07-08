@@ -92,7 +92,7 @@ function readStore(): Store {
   if (typeof window === 'undefined') return EMPTY_STORE;
   const raw = window.localStorage.getItem(DATA_KEY);
   if (!raw) {
-    // First load — seed from defaults.
+    // First load - seed from defaults.
     const s = getSeed();
     writeStore(s);
     writePasswords(getSeedPasswords());

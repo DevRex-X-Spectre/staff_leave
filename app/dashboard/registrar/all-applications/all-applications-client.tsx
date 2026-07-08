@@ -10,7 +10,7 @@ import { useApplications, useDepartments } from '@/lib/local/data-hooks';
 import type { LeaveApplicationWithRelations, LeaveStatus } from '@/types';
 import { FileText } from 'lucide-react';
 
-export function HrAllApplicationsClient() {
+export function RegistrarAllApplicationsClient() {
   const apps = useApplications();
   const departments = useDepartments();
   const [filterStatus, setFilterStatus] = useState('');
@@ -39,7 +39,7 @@ export function HrAllApplicationsClient() {
 
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
         <Input
-          placeholder="Search staff name…"
+          placeholder="Search staff nameâ€¦"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"
@@ -74,10 +74,10 @@ export function HrAllApplicationsClient() {
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {filtered.map((app) => (
                   <tr key={app.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                    <td className="py-3 px-3 sm:px-4 text-[13px] font-medium text-[var(--text-primary)] whitespace-nowrap">{app.applicant?.full_name ?? '—'}</td>
-                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">{app.department?.name ?? '—'}</td>
-                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">{app.leave_type?.name ?? '—'}</td>
-                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">{formatDate(app.start_date)} – {formatDate(app.end_date)}</td>
+                    <td className="py-3 px-3 sm:px-4 text-[13px] font-medium text-[var(--text-primary)] whitespace-nowrap">{app.applicant?.full_name ?? '-'}</td>
+                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">{app.department?.name ?? '-'}</td>
+                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">{app.leave_type?.name ?? '-'}</td>
+                    <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)] whitespace-nowrap">{formatDate(app.start_date)} â€“ {formatDate(app.end_date)}</td>
                     <td className="py-3 px-3 sm:px-4 text-[13px] text-[var(--text-secondary)]">{app.total_days}</td>
                     <td className="py-3 px-3 sm:px-4"><StatusBadge status={app.status} /></td>
                     <td className="py-3 px-3 sm:px-4 text-[12px] text-[var(--text-tertiary)]">{formatDate(app.created_at)}</td>
