@@ -9,17 +9,9 @@ import { PageHeader } from '@/components/ui/stat-card';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, FormField, Textarea } from '@/components/ui/input';
-import { cn, diffDaysInclusive } from '@/lib/utils';
-import {
-  useActiveLeaveTypes,
-  useDepartment,
-  useLeaveBalances,
-  useUser,
-  useUsers,
-} from '@/lib/local/data-hooks';
-import { useAuth } from '@/components/providers/auth-provider';
-import { Applications, Notifications } from '@/lib/local/store';
-import type { LeaveType } from '@/types';
+import { cn, workingDaysInclusive } from '@/lib/utils';
+import { applyLeaveAction } from '@/app/actions/leave';
+import type { Department, LeaveBalance, LeaveType, User } from '@/types';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -27,28 +19,48 @@ import {
   CheckCircle,
   CalendarDays,
   AlertTriangle,
+  UserCheck,
 } from 'lucide-react';
 
-const STEPS = ['Leave Type', 'Dates', 'Reason', 'Review & Submit'];
+const STEPS = ['Leave Type', 'Dates', 'Reason', 'Cover Staff', 'Review & Submit'];
 
 const ApplySchema = z.object({
   leave_type_id: z.string().min(1, 'Select a leave type'),
   start_date: z.string().min(10, 'Select start date'),
   end_date: z.string().min(10, 'Select end date'),
   reason: z.string().min(5, 'Enter a reason (min 5 characters)'),
+  destination: z.string(),
+  cover_staff_id: z.string().min(1, 'Select a staff member to cover you'),
 });
 
 type ApplyValues = z.infer<typeof ApplySchema>;
 
-export function ApplyLeaveClient() {
+/** Date ranges overlap when startA <= endB && startB <= endA (inclusive). */
+function rangesOverlap(
+  aStart: string,
+  aEnd: string,
+  bStart: string,
+  bEnd: string
+): boolean {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
+export function ApplyLeaveClient({
+  leaveTypes,
+  balances,
+  department,
+  applicant,
+  coverCandidates,
+  slotRanges,
+}: {
+  leaveTypes: LeaveType[];
+  balances: LeaveBalance[];
+  department: Department | null;
+  applicant: User | null;
+  coverCandidates: User[];
+  slotRanges: { slot_start: string; slot_end: string }[];
+}) {
   const router = useRouter();
-  const { currentUser } = useAuth();
-  const userId = currentUser?.id ?? '';
-  const user = useUser(userId);
-  const leaveTypes = useActiveLeaveTypes();
-  const balances = useLeaveBalances(userId);
-  const department = useDepartment(user?.department_id ?? null);
-  const users = useUsers();
 
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -61,13 +73,22 @@ export function ApplyLeaveClient() {
     formState: { errors },
   } = useForm<ApplyValues>({
     resolver: zodResolver(ApplySchema),
-    defaultValues: { leave_type_id: '', start_date: '', end_date: '', reason: '' },
+    defaultValues: {
+      leave_type_id: '',
+      start_date: '',
+      end_date: '',
+      reason: '',
+      destination: '',
+      cover_staff_id: '',
+    },
   });
 
   const leaveTypeId = watch('leave_type_id');
   const startDate = watch('start_date');
   const endDate = watch('end_date');
   const reason = watch('reason');
+  const destination = watch('destination');
+  const coverStaffId = watch('cover_staff_id');
 
   const selectedBalance = useMemo(
     () => balances.find((b) => b.leave_type.id === leaveTypeId) ?? null,
@@ -76,62 +97,51 @@ export function ApplyLeaveClient() {
 
   const days =
     startDate && endDate && startDate <= endDate
-      ? diffDaysInclusive(startDate, endDate)
+      ? workingDaysInclusive(startDate, endDate)
       : 0;
 
   const selectedType: LeaveType | undefined = leaveTypes.find((t) => t.id === leaveTypeId);
 
+  // Cover candidates are resolved server-side and passed in as props.
+  const selectedCover = useMemo(
+    () => coverCandidates.find((u) => u.id === coverStaffId) ?? null,
+    [coverCandidates, coverStaffId]
+  );
+
+  // Rota-conflict warning from the published departmental slots (authoritative
+  // check also runs in applyLeaveAction on the server).
+  const rotaConflict = useMemo(() => {
+    if (!startDate || !endDate || startDate > endDate) return false;
+    if (slotRanges.length === 0) return false;
+    return slotRanges.some((s) => rangesOverlap(startDate, endDate, s.slot_start, s.slot_end));
+  }, [slotRanges, startDate, endDate]);
+
+  const isCasual = selectedType?.name.toLowerCase() === 'casual leave';
+
   const canNext =
     step === 0 ? !!leaveTypeId :
     step === 1 ? !!startDate && !!endDate && days > 0 :
-    step === 2 ? reason.length >= 5 :
+    step === 2 ? reason.length >= 5 && (!isCasual || destination.trim().length > 0) :
+    step === 3 ? !!coverStaffId :
     true;
 
   const onSubmit = async (data: ApplyValues) => {
-    if (!user) return;
     setSubmitting(true);
     try {
-      // Check for rota conflict
-      const deptId = user.department_id;
-      let conflict = false;
-      if (deptId) {
-        const conflictingSlots = users
-          // Note: a real implementation would check Slots by department - keep simple
-          .filter((u) => u.role === 'staff' && u.department_id === deptId);
-        conflict = false; // simplified: full rota conflict detection can live in HOD view
-        void conflictingSlots;
-      }
-
-      const inserted = Applications.insert({
-        applicant_id: user.id,
+      const result = await applyLeaveAction({
         leave_type_id: data.leave_type_id,
-        department_id: user.department_id ?? '',
         start_date: data.start_date,
         end_date: data.end_date,
-        total_days: days,
         reason: data.reason,
-        supporting_doc_url: null,
-        status: 'pending',
-        rota_conflict: conflict,
+        destination: data.destination,
+        cover_staff_id: data.cover_staff_id,
       });
-
-      // Notify the department's HOD
-      const hod = users.find(
-        (u) => u.role === 'hod' && u.department_id === user.department_id
-      );
-      if (hod) {
-        Notifications.insert({
-          user_id: hod.id,
-          title: 'New leave request',
-          message: `${user.full_name} applied for ${selectedType?.name ?? 'leave'}.`,
-          type: 'leave_submitted',
-          is_read: false,
-          related_application_id: inserted.id,
-        });
+      if (result.ok) {
+        toast.success('Leave application submitted!');
+        router.push('/dashboard/staff/my-leaves');
+      } else {
+        toast.error(result.message);
       }
-
-      toast.success('Leave application submitted!');
-      router.push('/dashboard/staff/my-leaves');
     } catch (err) {
       toast.error(String(err instanceof Error ? err.message : 'Submission failed'));
     } finally {
@@ -148,7 +158,7 @@ export function ApplyLeaveClient() {
 
       <div className="flex flex-wrap items-start gap-y-4 mb-6 sm:mb-8">
         {STEPS.map((label, i) => (
-          <div key={label} className="flex items-center flex-1 min-w-[80px] last:flex-none">
+          <div key={label} className="flex items-center flex-1 min-w-[72px] last:flex-none">
             <div className="flex flex-col items-center shrink-0">
               <div
                 className={cn(
@@ -161,7 +171,7 @@ export function ApplyLeaveClient() {
                 {i < step ? <CheckCircle size={14} /> : i + 1}
               </div>
               <p className={cn(
-                'text-[10px] mt-1 font-medium text-center whitespace-nowrap',
+                'text-[9px] sm:text-[10px] mt-1 font-medium text-center whitespace-nowrap',
                 i === step ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'
               )}>
                 {label}
@@ -169,7 +179,7 @@ export function ApplyLeaveClient() {
             </div>
             {i < STEPS.length - 1 && (
               <div className={cn(
-                'h-0.5 flex-1 min-w-[20px] mx-2 sm:mx-3 mt-[-12px]',
+                'h-0.5 flex-1 min-w-[16px] mx-1.5 sm:mx-2.5 mt-[-12px]',
                 i < step ? 'bg-[var(--success)]' : 'bg-[var(--border-subtle)]'
               )} />
             )}
@@ -199,7 +209,7 @@ export function ApplyLeaveClient() {
                   >
                     <p className="text-[14px] font-medium text-[var(--text-primary)]">{lt.name}</p>
                     <p className="text-[12px] text-[var(--text-secondary)] mt-1">
-                      {bal ? `${bal.remaining_days} of ${bal.total_days} days remaining` : `${lt.max_days_academic ?? lt.max_days_non_academic ?? 0} days max`}
+                      {bal ? `${bal.remaining_days} of ${bal.total_days} working days remaining` : `${lt.max_days_academic ?? lt.max_days_non_academic ?? 0} days max`}
                     </p>
                     {lt.requires_document && (
                       <span className="inline-flex items-center gap-1 mt-2 text-[11px] text-[var(--warning)] bg-[var(--warning-bg)] px-2 py-0.5 rounded-full">
@@ -216,7 +226,7 @@ export function ApplyLeaveClient() {
         {step === 1 && (
           <>
             <CardTitle className="mb-1">Select dates</CardTitle>
-            <CardDescription className="mb-5">Choose your leave start and end dates.</CardDescription>
+            <CardDescription className="mb-5">Choose your leave start and end dates. Weekends are not counted.</CardDescription>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
               <FormField label="Start date" error={errors.start_date?.message}>
                 <Input type="date" {...register('start_date')} />
@@ -234,6 +244,14 @@ export function ApplyLeaveClient() {
                 <span className="text-[20px] font-semibold text-[var(--text-primary)]">{days}</span>
               </div>
             )}
+            {rotaConflict && (
+              <div className="p-3 mb-4 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)] flex items-start gap-2">
+                <AlertTriangle size={14} className="text-[var(--warning)] mt-0.5 shrink-0" />
+                <p className="text-[12px] text-[var(--warning)]">
+                  This range overlaps a published departmental rota slot. You can still apply, but your HOD will see a conflict flag.
+                </p>
+              </div>
+            )}
             {selectedBalance && days > 0 && (
               <div className={cn(
                 'p-4 rounded-[var(--radius-lg)] border',
@@ -246,7 +264,7 @@ export function ApplyLeaveClient() {
                   'text-[12px] mt-0.5',
                   days > selectedBalance.remaining_days ? 'text-[var(--danger)]' : 'text-[var(--success)]'
                 )}>
-                  {selectedBalance.remaining_days} days remaining. Applying for {days} day{days !== 1 ? 's' : ''}.
+                  {selectedBalance.remaining_days} working days remaining. Applying for {days} day{days !== 1 ? 's' : ''}.
                   {days > selectedBalance.remaining_days && ' This exceeds your balance.'}
                 </p>
               </div>
@@ -257,7 +275,10 @@ export function ApplyLeaveClient() {
         {step === 2 && (
           <>
             <CardTitle className="mb-1">Reason for leave</CardTitle>
-            <CardDescription className="mb-5">Provide a brief explanation of why you need this leave.</CardDescription>
+            <CardDescription className="mb-5">
+              Provide a brief explanation of why you need this leave.
+              {isCasual && ' FORM 1A also requires the location where you will be during the leave.'}
+            </CardDescription>
             <FormField label="Reason" error={errors.reason?.message}>
               <Textarea
                 placeholder="e.g. Annual family vacation, medical appointment..."
@@ -265,6 +286,14 @@ export function ApplyLeaveClient() {
                 {...register('reason')}
               />
             </FormField>
+            {isCasual && (
+              <FormField label="Destination" error={errors.destination?.message} className="mt-4">
+                <Input
+                  placeholder="e.g. Kaduna, Nigeria"
+                  {...register('destination')}
+                />
+              </FormField>
+            )}
             {selectedType?.requires_document && (
               <div className="mt-4 p-3 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)]">
                 <p className="text-[12px] text-[var(--warning)]">
@@ -277,15 +306,66 @@ export function ApplyLeaveClient() {
 
         {step === 3 && (
           <>
+            <CardTitle className="mb-1">Select covering staff</CardTitle>
+            <CardDescription className="mb-5">
+              Nominate a colleague from {department?.name ?? 'your department'} who will cover your duties while you are away.
+            </CardDescription>
+            {coverCandidates.length === 0 ? (
+              <div className="p-4 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)]">
+                <p className="text-[12px] text-[var(--warning)]">
+                  No other active staff found in your department to act as cover. Please ask your HOD or Registrar to add one.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[320px] overflow-y-auto pr-1">
+                {coverCandidates.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setValue('cover_staff_id', c.id, { shouldValidate: true })}
+                    className={cn(
+                      'flex items-center gap-3 p-3 rounded-[var(--radius-lg)] border text-left transition-all',
+                      coverStaffId === c.id
+                        ? 'border-[var(--ink)] bg-[var(--bg-subtle)]'
+                        : 'border-[var(--border-subtle)] hover:border-[var(--border-default)]'
+                    )}
+                  >
+                    <span className={cn(
+                      'w-9 h-9 rounded-full inline-flex items-center justify-center text-[12px] font-semibold shrink-0',
+                      coverStaffId === c.id ? 'bg-[var(--ink)] text-white' : 'bg-[var(--bg-subtle)] text-[var(--text-secondary)]'
+                    )}>
+                      {c.full_name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-medium text-[var(--text-primary)] truncate">{c.full_name}</span>
+                      <span className="block text-[11px] text-[var(--text-tertiary)] truncate">{c.staff_id ?? c.email}</span>
+                    </span>
+                    {coverStaffId === c.id && (
+                      <UserCheck size={16} className="ml-auto text-[var(--ink)] shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {step === 4 && (
+          <>
             <CardTitle className="mb-1">Review & submit</CardTitle>
             <CardDescription className="mb-5">Review your application before submitting.</CardDescription>
             <div className="space-y-3">
               {[
-                ['Leave type', selectedType?.name ?? '-'],
+                ['Applicant', applicant?.full_name ?? '-'],
+                ['Staff ID', applicant?.staff_id ?? '-'],
+                ['Rank', applicant?.rank ?? '-'],
                 ['Department', department?.name ?? '-'],
+                ['Leave type', selectedType?.name ?? '-'],
                 ['Start date', startDate],
                 ['End date', endDate],
-                ['Total days', `${days} day${days !== 1 ? 's' : ''}`],
+                ['Working days', `${days} day${days !== 1 ? 's' : ''}`],
+                ...(isCasual ? [['Destination', destination] as [string, string]] : []),
+                ['Covering staff', selectedCover?.full_name ?? '-'],
                 ['Reason', reason],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-start justify-between py-2.5 border-b border-[var(--border-subtle)] last:border-0">

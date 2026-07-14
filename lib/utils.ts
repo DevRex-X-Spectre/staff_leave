@@ -43,6 +43,31 @@ export function diffDaysInclusive(start: string | Date, end: string | Date): num
   return Math.round(ms / 86400000) + 1;
 }
 
+/**
+ * Working days (Mon-Fri) inclusive of both start and end dates. This is how
+ * NAUB counts leave - weekends are not deducted from a staff member's balance.
+ * Public holidays are NOT modelled here; they can be added as a holiday
+ * calendar in a later iteration.
+ *
+ * `end` is treated as inclusive (a leave starting and ending the same weekday
+ * counts as 1 working day).
+ */
+export function workingDaysInclusive(start: string | Date, end: string | Date): number {
+  const s = typeof start === 'string' ? new Date(start + 'T00:00:00') : new Date(start);
+  const e = typeof end === 'string' ? new Date(end + 'T00:00:00') : new Date(end);
+  s.setHours(0, 0, 0, 0);
+  e.setHours(0, 0, 0, 0);
+  if (e < s) return 0;
+  let count = 0;
+  const cursor = new Date(s);
+  while (cursor <= e) {
+    const day = cursor.getDay(); // 0 = Sun, 6 = Sat
+    if (day !== 0 && day !== 6) count++;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return count;
+}
+
 /** Human-readable relative time, e.g. "2 hours ago". */
 export function timeAgo(input: string | Date): string {
   const d = typeof input === 'string' ? new Date(input) : input;

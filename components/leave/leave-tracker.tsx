@@ -20,30 +20,65 @@ function StatusIcon({
   isRejected: boolean;
   isPending: boolean;
 }) {
+  const base =
+    'w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out relative';
+  const ring = 'before:absolute before:inset-[-6px] before:rounded-full before:transition-all before:duration-300';
+
   if (isComplete) {
     return (
-      <div className="w-6 h-6 rounded-full bg-[var(--success)] flex items-center justify-center">
-        <Check size={13} className="text-white" strokeWidth={2.5} />
+      <div
+        className={cn(
+          base,
+          ring,
+          'bg-[var(--success)] text-white shadow-[0_0_0_1px_rgba(16,185,129,0.12)]',
+          'before:bg-[rgba(16,185,129,0.12)] before:scale-100'
+        )}
+      >
+        <Check size={14} className="text-white" strokeWidth={2.5} />
       </div>
     );
   }
+
   if (isRejected) {
     return (
-      <div className="w-6 h-6 rounded-full bg-[var(--danger)] flex items-center justify-center">
-        <X size={13} className="text-white" strokeWidth={2.5} />
+      <div
+        className={cn(
+          base,
+          ring,
+          'bg-[var(--danger)] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.12)]',
+          'before:bg-[rgba(239,68,68,0.12)] before:scale-100'
+        )}
+      >
+        <X size={14} className="text-white" strokeWidth={2.5} />
       </div>
     );
   }
+
   if (isPending) {
     return (
-      <div className="w-6 h-6 rounded-full border-2 border-[var(--warning)] flex items-center justify-center">
-        <Clock size={11} className="text-[var(--warning)]" />
+      <div
+        className={cn(
+          base,
+          ring,
+          'border-2 border-[var(--warning)] bg-[var(--warning-bg)] text-[var(--warning)]',
+          'shadow-[0_0_0_1px_rgba(245,158,11,0.12)]',
+          'before:bg-[rgba(245,158,11,0.12)] before:scale-100'
+        )}
+      >
+        <Clock size={12} className="text-[var(--warning)]" />
       </div>
     );
   }
-  // Future step
+
   return (
-    <div className="w-6 h-6 rounded-full border-2 border-[var(--border-subtle)] flex items-center justify-center">
+    <div
+      className={cn(
+        base,
+        ring,
+        'border-2 border-[var(--border-subtle)] bg-[var(--bg-card)] text-[var(--text-tertiary)]',
+        'before:bg-[rgba(148,163,184,0.10)] before:scale-100'
+      )}
+    >
       <div className="w-2 h-2 rounded-full bg-[var(--border-subtle)]" />
     </div>
   );
@@ -51,7 +86,7 @@ function StatusIcon({
 
 /**
  * LeaveTracker - stepper showing the multi-gate approval flow:
- * Submitted â†' HOD Review â†' Registrar Review â†' Final Decision
+ * Submitted -> HOD Review -> Registrar Review -> Final Decision
  *
  * Used in the staff "My Leave History" drawer.
  */
@@ -95,51 +130,45 @@ export function LeaveTracker({ status }: { status: LeaveStatus }) {
   ];
 
   return (
-    <div className="flex items-start gap-0">
-      {steps.map((step, i) => (
-        <div key={step.label} className="flex items-start">
-          {/* Step node */}
-          <div className="flex flex-col items-center">
-            <StatusIcon
-              isComplete={step.isComplete}
-              isRejected={step.isRejected}
-              isPending={step.isCurrent}
-            />
-            <p
-              className={cn(
-                'mt-2 text-[11px] font-medium text-center whitespace-nowrap',
-                step.isCurrent && !step.isRejected && 'text-[var(--warning)]',
-                step.isRejected && step.isCurrent && 'text-[var(--danger)]',
-                step.isComplete && !step.isRejected && 'text-[var(--success)]',
-                !step.isCurrent && !step.isComplete && 'text-[var(--text-tertiary)]'
-              )}
-            >
-              {step.label}
-            </p>
-          </div>
+    <div className="w-full overflow-hidden px-1 sm:px-2 py-1">
+      <div className="mx-auto w-full max-w-4xl">
+        <div className="grid grid-cols-4 gap-x-1 sm:gap-x-2 items-start">
+          {steps.map((step, i) => (
+            <div key={step.label} className="relative flex flex-col items-center min-w-0 text-center">
+              <div className="relative z-10 flex items-center justify-center h-10 sm:h-12 w-full">
+                <StatusIcon
+                  isComplete={step.isComplete}
+                  isRejected={step.isRejected}
+                  isPending={step.isCurrent}
+                />
+              </div>
 
-          {/* Connector */}
-          {i < steps.length - 1 && (
-            <div
-              className={cn(
-                'h-6 w-8 mx-1 mt-3 flex items-center justify-center',
-                step.isComplete && !step.isRejected
-                  ? 'text-[var(--success)]'
-                  : 'text-[var(--border-subtle)]'
+              {i < steps.length - 1 && (
+                <div className="absolute top-5 sm:top-6 left-[calc(50%+14px)] right-[calc(-50%+14px)] h-0.5 overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full w-full origin-left transition-transform duration-500 ease-out',
+                      step.isComplete && !step.isRejected ? 'bg-[var(--success)] scale-x-100' : 'bg-[var(--border-subtle)] scale-x-100'
+                    )}
+                  />
+                </div>
               )}
-            >
-              <div
+
+              <p
                 className={cn(
-                  'h-0.5 flex-1',
-                  step.isComplete && !step.isRejected
-                    ? 'bg-[var(--success)]'
-                    : 'bg-[var(--border-subtle)]'
+                  'mt-1.5 text-[10px] sm:text-[11px] md:text-[12px] font-medium leading-tight break-words whitespace-normal max-w-full transition-colors duration-300',
+                  step.isCurrent && !step.isRejected && 'text-[var(--warning)]',
+                  step.isRejected && step.isCurrent && 'text-[var(--danger)]',
+                  step.isComplete && !step.isRejected && 'text-[var(--success)]',
+                  !step.isCurrent && !step.isComplete && 'text-[var(--text-tertiary)]'
                 )}
-              />
+              >
+                {step.label}
+              </p>
             </div>
-          )}
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 }

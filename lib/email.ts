@@ -107,7 +107,11 @@ export async function sendLeaveSubmittedToHod(args: {
   applicant: User;
   leaveType: LeaveType;
   application: LeaveApplication;
+  coverStaff?: User | null;
 }) {
+  const coverRow = args.coverStaff
+    ? `<tr><td style="padding:8px 0;color:#6b7280">Covering staff</td><td style="padding:8px 0;font-weight:500">${args.coverStaff.full_name}</td></tr>`
+    : '';
   return send({
     to: args.hod.email,
     subject: `Leave request from ${args.applicant.full_name}`,
@@ -119,7 +123,8 @@ export async function sendLeaveSubmittedToHod(args: {
          <tr><td style="padding:8px 0;color:#6b7280">Leave type</td><td style="padding:8px 0;font-weight:500">${args.leaveType.name}</td></tr>
          <tr><td style="padding:8px 0;color:#6b7280">Start date</td><td style="padding:8px 0;font-weight:500">${args.application.start_date}</td></tr>
          <tr><td style="padding:8px 0;color:#6b7280">End date</td><td style="padding:8px 0;font-weight:500">${args.application.end_date}</td></tr>
-         <tr><td style="padding:8px 0;color:#6b7280">Total days</td><td style="padding:8px 0;font-weight:500">${args.application.total_days}</td></tr>
+         <tr><td style="padding:8px 0;color:#6b7280">Working days</td><td style="padding:8px 0;font-weight:500">${args.application.total_days}</td></tr>
+         ${coverRow}
          <tr><td style="padding:8px 0;color:#6b7280">Reason</td><td style="padding:8px 0">${args.application.reason}</td></tr>
        </table>
        ${ctaButton(`${APP_URL}/dashboard/hod/requests`, 'Review request')}`
@@ -159,7 +164,11 @@ export async function sendHrDecision(args: {
   leaveType: LeaveType;
   approved: boolean;
   comment: string | null;
+  coverStaff?: User | null;
 }) {
+  const coverRow = args.coverStaff
+    ? `<tr><td style="padding:8px 0;color:#6b7280">Covering staff</td><td style="padding:8px 0;font-weight:500">${args.coverStaff.full_name}</td></tr>`
+    : '';
   return send({
     to: args.applicant.email,
     subject: args.approved
@@ -173,7 +182,8 @@ export async function sendHrDecision(args: {
          <tr><td style="padding:8px 0;color:#6b7280">Leave type</td><td style="padding:8px 0;font-weight:500">${args.leaveType.name}</td></tr>
          <tr><td style="padding:8px 0;color:#6b7280">Start date</td><td style="padding:8px 0;font-weight:500">${args.application.start_date}</td></tr>
          <tr><td style="padding:8px 0;color:#6b7280">End date</td><td style="padding:8px 0;font-weight:500">${args.application.end_date}</td></tr>
-         <tr><td style="padding:8px 0;color:#6b7280">Days</td><td style="padding:8px 0;font-weight:500">${args.application.total_days}</td></tr>
+         <tr><td style="padding:8px 0;color:#6b7280">Working days</td><td style="padding:8px 0;font-weight:500">${args.application.total_days}</td></tr>
+         ${coverRow}
        </table>
        ${args.comment ? `<p style="background:#f4f4f4;padding:12px 16px;border-radius:8px"><strong>Registrar comment:</strong> ${args.comment}</p>` : ''}
        ${ctaButton(`${APP_URL}/dashboard/staff/my-leaves`, 'View request')}`

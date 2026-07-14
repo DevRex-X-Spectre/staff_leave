@@ -1,64 +1,62 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { PageHeader, EmptyState } from '@/components/ui/stat-card';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, FormField, Select } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { useLeaveTypes } from '@/lib/local/data-hooks';
-import { LeaveTypes } from '@/lib/local/store';
+import { createLeaveTypeAction, toggleLeaveTypeAction } from '@/app/actions/admin';
 import { CalendarDays, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import type { LeaveTypeApplicable } from '@/types';
+import type { LeaveType, LeaveTypeApplicable } from '@/types';
 
-export function AdminLeaveTypesClient() {
-  const types = useLeaveTypes();
+export function AdminLeaveTypesClient({
+  leaveTypes,
+}: {
+  leaveTypes: LeaveType[];
+}) {
   const [showCreate, setShowCreate] = useState(false);
-  const [creating, setCreating] = useState(false);
-
   const [name, setName] = useState('');
   const [applicable, setApplicable] = useState<LeaveTypeApplicable>('both');
   const [maxAcademic, setMaxAcademic] = useState('');
   const [maxNonAcademic, setMaxNonAcademic] = useState('');
   const [requiresDoc, setRequiresDoc] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleCreate = () => {
     if (!name.trim()) {
       toast.error('Name is required.');
       return;
     }
-    setCreating(true);
-    try {
-      LeaveTypes.insert({
+    startTransition(async () => {
+      const result = await createLeaveTypeAction({
         name: name.trim(),
-        applicable_to: applicable,
-        max_days_academic: maxAcademic ? Number(maxAcademic) : null,
-        max_days_non_academic: maxNonAcademic ? Number(maxNonAcademic) : null,
-        requires_document: requiresDoc,
-        is_active: true,
+        applicableTo: applicable,
+        maxDaysAcademic: maxAcademic ? Number(maxAcademic) : null,
+        maxDaysNonAcademic: maxNonAcademic ? Number(maxNonAcademic) : null,
+        requiresDocument: requiresDoc,
       });
-      toast.success('Leave type created.');
-      setShowCreate(false);
-      setName('');
-      setApplicable('both');
-      setMaxAcademic('');
-      setMaxNonAcademic('');
-      setRequiresDoc(false);
-    } catch (e) {
-      toast.error(String(e));
-    } finally {
-      setCreating(false);
-    }
+      if (result.ok) {
+        toast.success('Leave type created.');
+        setShowCreate(false);
+        setName('');
+        setApplicable('both');
+        setMaxAcademic('');
+        setMaxNonAcademic('');
+        setRequiresDoc(false);
+      } else {
+        toast.error(result.message);
+      }
+    });
   };
 
-  const handleToggle = (id: string, currentActive: boolean) => {
-    try {
-      LeaveTypes.update(id, { is_active: !currentActive });
-    } catch (e) {
-      toast.error(String(e));
-    }
+  const handleToggle = (id: string) => {
+    startTransition(async () => {
+      const result = await toggleLeaveTypeAction(id);
+      if (!result.ok) toast.error(result.message);
+    });
   };
 
   return (
@@ -75,7 +73,7 @@ export function AdminLeaveTypesClient() {
       />
 
       <Card padding={false}>
-        {types.length === 0 ? (
+        {leaveTypes.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
             title="No leave types"
@@ -89,7 +87,7 @@ export function AdminLeaveTypesClient() {
           />
         ) : (
           <div className="divide-y divide-[var(--border-subtle)]">
-            {types.map((lt) => (
+            {leaveTypes.map((lt) => (
               <div
                 key={lt.id}
                 className="flex items-start justify-between gap-3 px-4 sm:px-6 py-4 hover:bg-[var(--bg-hover)] transition-colors"
@@ -125,7 +123,7 @@ export function AdminLeaveTypesClient() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleToggle(lt.id, lt.is_active)}
+                  onClick={() => handleToggle(lt.id)}
                 >
                   {lt.is_active ? 'Deactivate' : 'Activate'}
                 </Button>
@@ -171,8 +169,8 @@ export function AdminLeaveTypesClient() {
           </div>
           <div className="flex justify-end gap-3 mt-5">
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button variant="ink" disabled={creating} onClick={handleCreate}>
-              {creating ? 'Creating...' : 'Create'}
+            <Button variant="ink" disabled={isPending} onClick={handleCreate}>
+              {isPending ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </Dialog>

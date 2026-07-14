@@ -8,24 +8,26 @@ import { StatusBadge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { Clock, CheckCircle, XCircle, CalendarDays, FileText } from 'lucide-react';
-import { useApplications } from '@/lib/local/data-hooks';
+import type { LeaveApplicationWithRelations } from '@/types';
 
-export function RegistrarDashboardClient() {
-  const allApps = useApplications();
-
+export function RegistrarDashboardClient({
+  applications,
+}: {
+  applications: LeaveApplicationWithRelations[];
+}) {
   const { pending, approved, rejected, onLeave } = useMemo(() => {
-    const pending = allApps.filter((a) => a.status === 'hod_approved');
-    const approved = allApps.filter((a) => a.status === 'approved');
-    const rejected = allApps.filter((a) => a.status === 'rejected');
+    const pending = applications.filter((a) => a.status === 'hod_approved');
+    const approved = applications.filter((a) => a.status === 'approved');
+    const rejected = applications.filter((a) => a.status === 'rejected');
     const now = new Date().toISOString().split('T')[0];
-    const onLeave = allApps.filter(
+    const onLeave = applications.filter(
       (a) =>
         a.status === 'approved' &&
         a.start_date <= now &&
         a.end_date >= now
     );
     return { pending, approved, rejected, onLeave };
-  }, [allApps]);
+  }, [applications]);
 
   return (
     <div className="animate-fade-in">

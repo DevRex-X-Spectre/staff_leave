@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { PageHeader, Skeleton, EmptyState } from '@/components/ui/stat-card';
-import { Card, CardTitle, CardDescription } from '@/components/ui/card';
-import { useAuth } from '@/components/providers/auth-provider';
-import { useRotaSlotsByDepartment } from '@/lib/local/data-hooks';
-import { Users as UsersStore } from '@/lib/local/store';
-import { Info, Users as UsersIcon } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import listPlugin from '@fullcalendar/list';
+import interactionPlugin from '@fullcalendar/interaction';
+import { PageHeader, EmptyState } from '@/components/ui/stat-card';
+import { Card, CardDescription } from '@/components/ui/card';
+import { ChevronLeft, ChevronRight, Info, Users as UsersIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { RotaSlot } from '@/types';
 
 type RotaRow = {
   slot_start: string;
@@ -57,14 +60,18 @@ function bucketByDay(rows: RotaRow[]): DayBucket[] {
   return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function StaffRotaClient() {
-  const { currentUser } = useAuth();
-  const departmentId = currentUser?.department_id ?? null;
-  const slots = useRotaSlotsByDepartment(departmentId);
-  const calendarRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
-  const [peakCount, setPeakCount] = useState(0);
-  const [uniqueDays, setUniqueDays] = useState(0);
+export function StaffRotaClient({
+  slots,
+  departmentId,
+  departmentSize,
+}: {
+  slots: RotaSlot[];
+  departmentId: string;
+  departmentSize: number;
+}) {
+  const calRef = useRef<FullCalendar>(null);
+  const [title, setTitle] = useState('');
+  const [view, setView] = useState<'dayGridMonth' | 'listMonth'>('dayGridMonth');
 
   const rows: RotaRow[] = useMemo(
     () =>
@@ -78,64 +85,40 @@ export function StaffRotaClient() {
 
   const buckets = useMemo(() => bucketByDay(rows), [rows]);
 
-  const departmentSize = useMemo(() => {
-    if (!departmentId) return 0;
-    return UsersStore.all().filter(
-      (u) => u.department_id === departmentId && u.is_active && u.is_approved
-    ).length;
-  }, [departmentId]);
+  const peakCount = buckets.length ? Math.max(...buckets.map((b) => b.count)) : 0;
+  const uniqueDays = buckets.length;
 
-  useEffect(() => {
-    if (buckets.length) {
-      setPeakCount(Math.max(...buckets.map((b) => b.count)));
-      setUniqueDays(buckets.length);
-    }
-  }, [buckets]);
-
-  useEffect(() => {
-    const el = calendarRef.current;
-    if (!el) return;
-    setLoading(false);
-
-    const events = buckets.map((b) => ({
+  const calendarEvents = useMemo(() => {
+    const backgroundEvents = buckets.map((b) => ({
       start: b.date,
       allDay: true,
       display: 'background' as const,
       backgroundColor: b.count >= MAX_CONCURRENT ? COLOR_HEAVY : COLOR_LIGHT,
-      title: `${b.count} on leave`,
-      extendedProps: { count: b.count },
     }));
-
     const labelEvents = buckets.map((b) => ({
       start: b.date,
       allDay: true,
-      title: `${b.count}`,
-      color: b.count >= MAX_CONCURRENT ? COLOR_HEAVY : COLOR_LIGHT,
+      title: `${b.count} on leave`,
+      backgroundColor: b.count >= MAX_CONCURRENT ? COLOR_HEAVY : COLOR_LIGHT,
+      borderColor: b.count >= MAX_CONCURRENT ? COLOR_HEAVY : COLOR_LIGHT,
       textColor: '#ffffff',
+      extendedProps: { count: b.count },
     }));
-
-    import('@fullcalendar/core').then(({ Calendar }) => {
-      import('@fullcalendar/daygrid').then(() => {
-        if (!calendarRef.current) return;
-        new Calendar(calendarRef.current, {
-          plugins: [],
-          initialView: 'dayGridMonth',
-          headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth',
-          },
-          height: 'auto',
-          events: [...events, ...labelEvents],
-          eventDisplay: 'block',
-        }).render();
-      });
-    });
-
-    return () => {
-      if (calendarRef.current) calendarRef.current.innerHTML = '';
-    };
+    return [...backgroundEvents, ...labelEvents];
   }, [buckets]);
+
+  const nav = (dir: 'prev' | 'next' | 'today') => {
+    const api = calRef.current?.getApi();
+    if (!api) return;
+    if (dir === 'today') api.today();
+    else api[dir]();
+  };
+
+  const switchView = (v: 'dayGridMonth' | 'listMonth') => {
+    const api = calRef.current?.getApi();
+    setView(v);
+    api?.changeView(v);
+  };
 
   if (!departmentId) {
     return (
@@ -183,53 +166,144 @@ export function StaffRotaClient() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
         <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[var(--radius-card)] px-4 py-3">
-          <p className="text-[11px] uppercase tracking-widest text-[var(--text-tertiary)]">Department</p>
-          <p className="text-[18px] font-semibold text-[var(--text-primary)] mt-1">{departmentSize} staff</p>
+          <p className="text-[11px] uppercase tracking-widest text-[var(--text-tertiary)] font-medium">Department</p>
+          <p className="text-[18px] font-semibold text-[var(--text-primary)] mt-1 tabular-nums">{departmentSize} staff</p>
         </div>
         <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[var(--radius-card)] px-4 py-3">
-          <p className="text-[11px] uppercase tracking-widest text-[var(--text-tertiary)]">Days with leave</p>
-          <p className="text-[18px] font-semibold text-[var(--text-primary)] mt-1">{uniqueDays}</p>
+          <p className="text-[11px] uppercase tracking-widest text-[var(--text-tertiary)] font-medium">Days with leave</p>
+          <p className="text-[18px] font-semibold text-[var(--text-primary)] mt-1 tabular-nums">{uniqueDays}</p>
         </div>
         <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[var(--radius-card)] px-4 py-3 col-span-2 sm:col-span-1">
-          <p className="text-[11px] uppercase tracking-widest text-[var(--text-tertiary)]">Peak overlap</p>
-          <p className="text-[18px] font-semibold text-[var(--text-primary)] mt-1">
+          <p className="text-[11px] uppercase tracking-widest text-[var(--text-tertiary)] font-medium">Peak overlap</p>
+          <p className="text-[18px] font-semibold text-[var(--text-primary)] mt-1 tabular-nums">
             {peakCount} {peakCount === 1 ? 'person' : 'people'}
           </p>
         </div>
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5 sm:mb-6">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLOR_LIGHT }} />
-          <span className="text-[13px] text-[var(--text-secondary)]">1 person on leave</span>
+          <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: COLOR_LIGHT }} aria-hidden />
+          <span className="text-[12px] sm:text-[13px] text-[var(--text-secondary)]">1 person on leave</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLOR_HEAVY }} />
-          <span className="text-[13px] text-[var(--text-secondary)]">
+          <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: COLOR_HEAVY }} aria-hidden />
+          <span className="text-[12px] sm:text-[13px] text-[var(--text-secondary)]">
             {MAX_CONCURRENT}+ people (concurrent limit reached)
           </span>
         </div>
       </div>
 
-      <Card padding={false}>
-        <div className="p-6 border-b border-[var(--border-subtle)]">
-          <CardTitle>Departmental Rota</CardTitle>
-          <CardDescription className="mt-1">
-            Only the number of staff on leave is shown per day - individual names are
-            hidden to protect privacy.
-          </CardDescription>
-        </div>
-        <div className="p-6">
-          {loading ? (
-            <div className="space-y-3">
-              <Skeleton height={40} />
-              <Skeleton height={300} />
+      <Card padding={false} className="overflow-hidden">
+        {/* Custom toolbar */}
+        <div className="px-4 sm:px-6 py-4 border-b border-[var(--border-subtle)]">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-1.5 order-2 sm:order-1">
+              <button
+                type="button"
+                onClick={() => nav('prev')}
+                aria-label="Previous"
+                className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => nav('next')}
+                aria-label="Next"
+                className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => nav('today')}
+                className="ml-1 h-8 px-3 inline-flex items-center rounded-[var(--radius-md)] border border-[var(--border-subtle)] text-[12px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Today
+              </button>
             </div>
-          ) : (
-            <div ref={calendarRef} className="fc" />
-          )}
+
+            <div className="order-1 sm:order-2 sm:flex-1 text-center">
+              <h2
+                className="text-[16px] sm:text-[18px] font-semibold text-[var(--text-primary)] capitalize"
+                style={{ fontFamily: 'var(--font-cal-sans)' }}
+              >
+                {title || 'Loading...'}
+              </h2>
+            </div>
+
+            <div className="order-3 inline-flex p-0.5 rounded-[var(--radius-md)] bg-[var(--bg-subtle)] self-start sm:self-auto">
+              {(['dayGridMonth', 'listMonth'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => switchView(v)}
+                  className={cn(
+                    'h-7 px-3 rounded-[calc(var(--radius-md)-2px)] text-[12px] font-medium transition-colors',
+                    view === v
+                      ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                      : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                  )}
+                >
+                  {v === 'dayGridMonth' ? 'Month' : 'List'}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
+
+        <div className="p-3 sm:p-5">
+          <FullCalendar
+            ref={calRef}
+            plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={false}
+            events={calendarEvents}
+            height="auto"
+            eventDisplay="block"
+            dayMaxEvents={3}
+            datesSet={(info) => setTitle(info.view.title)}
+            eventContent={(arg) => {
+              if (arg.view.type === 'listMonth') {
+                const { count } = arg.event.extendedProps as { count: number };
+                const isHeavy = count >= MAX_CONCURRENT;
+                return (
+                  <div className="flex items-center gap-2 min-w-0 py-0.5">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: isHeavy ? COLOR_HEAVY : COLOR_LIGHT }}
+                      aria-hidden
+                    />
+                    <span className="text-[13px] font-medium text-[var(--text-primary)] truncate">
+                      {count} {count === 1 ? 'person' : 'people'} on leave
+                    </span>
+                  </div>
+                );
+              }
+              const { count } = arg.event.extendedProps as { count: number };
+              return (
+                <div
+                  className="fc-event-pill text-[10px] sm:text-[11px] font-semibold text-white text-center rounded-[4px] px-1 py-0.5 truncate"
+                  style={{
+                    backgroundColor: count >= MAX_CONCURRENT ? COLOR_HEAVY : COLOR_LIGHT,
+                  }}
+                  title={`${count} on leave`}
+                >
+                  {count}
+                </div>
+              );
+            }}
+          />
+        </div>
+      </Card>
+
+      <Card className="mt-5">
+        <CardDescription>
+          Only the number of staff on leave is shown per day - individual names are
+          hidden to protect privacy. Switch to List view to see a compact agenda.
+        </CardDescription>
       </Card>
     </div>
   );

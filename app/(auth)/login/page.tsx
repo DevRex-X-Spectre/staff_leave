@@ -1,71 +1,77 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input, FormField } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/components/providers/auth-provider';
-import { DEFAULT_PASSWORD } from '@/lib/local/constants';
-import { dashboardPathFor } from '@/lib/local/routes';
+import { DEFAULT_PASSWORD } from '@/lib/constants';
 
-type DemoAccount = {
+type TestAccount = {
   staffId: string;
   role: string;
   name: string;
 };
 
-const DEMO_ACCOUNTS: DemoAccount[] = [
-  { staffId: 'NAUB/ADM/001', role: 'Admin', name: 'System Administrator' },
+const TEST_ACCOUNTS: TestAccount[] = [
+  { staffId: 'NAUB/ADM/SN001', role: 'Admin', name: 'System Administrator' },
   { staffId: 'NAUB/CS/001', role: 'HOD', name: 'Dr. Chukwuma Okeke' },
-  { staffId: 'NAUB/REG/001', role: 'Registrar', name: 'Amina Bello' },
+  { staffId: 'NAUB/REG/SN001', role: 'Registrar', name: 'Amina Bello' },
   { staffId: 'NAUB/CS/010', role: 'Staff', name: 'Engr. Samuel Adekunle' },
 ];
 
 export default function LoginPage() {
+  // useSearchParams() must be inside a Suspense boundary so the page can be
+  // statically prerendered.
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
-  const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('redirect') ?? undefined;
   const [staffId, setStaffId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function doSignIn(id: string, pw: string) {
     setError(null);
     setSubmitting(true);
     try {
-      const result = await login(staffId, password);
-      if (result.ok) {
-        router.push(dashboardPathFor(result.user.role));
-      } else {
-        setError(result.message);
+      const res = await signIn('credentials', {
+        staffId: id,
+        password: pw,
+        redirect: false,
+      });
+      if (!res || res.error) {
+        setError('Invalid staff ID or password, or your account is not yet approved.');
+        return;
       }
+      // The middleware's `authorized` callback routes logged-in users from
+      // /login to their role dashboard, so push there and let it resolve.
+      router.push(callbackUrl ?? '/login');
+      router.refresh();
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleDemo(account: DemoAccount) {
-    setError(null);
-    setSubmitting(true);
-    try {
-      const result = await login(account.staffId, DEFAULT_PASSWORD);
-      if (result.ok) {
-        router.push(dashboardPathFor(result.user.role));
-      } else {
-        setError(result.message);
-      }
-    } finally {
-      setSubmitting(false);
-    }
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void doSignIn(staffId, password);
   }
 
   return (
     <div className="min-h-screen bg-[var(--bg-page)] flex flex-col">
-      {/* Top bar */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-4">
         <Link
           href="/"
@@ -76,14 +82,10 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      {/* Form area */}
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-[420px]">
-          {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-[var(--ink)] rounded-[var(--radius-lg)] flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-[16px] font-bold tracking-tight">NA</span>
-            </div>
+            <img src="/naub-logo.png" alt="NAUB logo" className="w-16 h-16 rounded-full mx-auto mb-4" />
             <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">
               Welcome back
             </h1>
@@ -95,12 +97,11 @@ export default function LoginPage() {
           <Card>
             <div className="mb-4 p-3 bg-[var(--info-banner-bg)] border border-[var(--action-blue)]/20 rounded-[var(--radius-md)]">
               <p className="text-[12px] text-[var(--action-blue)] font-medium mb-1">
-                Demo mode
+                Seeded test accounts
               </p>
               <p className="text-[11px] text-[var(--action-blue)]/80">
-                Sign in with your Staff ID and the default password{' '}
-                <strong className="font-semibold">{DEFAULT_PASSWORD}</strong>.
-                Data is stored locally in this browser.
+                Sign in with your Staff ID. Seeded accounts use the default
+                password <strong className="font-semibold">{DEFAULT_PASSWORD}</strong>.
               </p>
             </div>
 
@@ -115,7 +116,7 @@ export default function LoginPage() {
                 <FormField label="Staff ID">
                   <Input
                     type="text"
-                    placeholder="NAUB/CS/001"
+                    placeholder="e.g. NAUB/ADM/SN001"
                     autoComplete="username"
                     value={staffId}
                     onChange={(e) => setStaffId(e.target.value)}
@@ -123,8 +124,7 @@ export default function LoginPage() {
                   />
                 </FormField>
                 <FormField label="Password">
-                  <Input
-                    type="password"
+                  <PasswordInput
                     placeholder="••••••••"
                     autoComplete="current-password"
                     value={password}
@@ -135,13 +135,8 @@ export default function LoginPage() {
               </div>
 
               <div className="mt-6">
-                <Button
-                  type="submit"
-                  className="w-full"
-                  variant="ink"
-                  disabled={submitting}
-                >
-                  {submitting ? 'Signing in...' : 'Sign in'}
+                <Button type="submit" className="w-full" variant="ink" disabled={submitting}>
+                  {submitting ? 'Signing in…' : 'Sign in'}
                 </Button>
               </div>
             </form>
@@ -157,15 +152,15 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-widest text-center mb-3">
-              Quick demo login
+              Quick login
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {DEMO_ACCOUNTS.map((acc) => (
+              {TEST_ACCOUNTS.map((acc) => (
                 <button
                   key={acc.staffId}
                   type="button"
                   disabled={submitting}
-                  onClick={() => handleDemo(acc)}
+                  onClick={() => doSignIn(acc.staffId, DEFAULT_PASSWORD)}
                   className="w-full p-2.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] text-left hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-50"
                 >
                   <p className="text-[12px] font-medium text-[var(--text-primary)]">

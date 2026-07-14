@@ -1,25 +1,21 @@
-'use client';
-
-import { useAuth } from '@/components/providers/auth-provider';
+import { auth } from '@/auth';
+import { Departments, Users } from '@/lib/db';
 import { ProfileClient } from './profile-client';
+import type { User, UserRole } from '@/types';
 
-/**
- * /dashboard/profile - accessible to all four roles. Shows the user's info
- * and lets them change their password.
- *
- * Phase 3 placeholder: layout/auth gating happens in app/dashboard/layout.tsx,
- * so by the time this renders we know currentUser is non-null.
- */
-export default function ProfilePage() {
-  const { currentUser, ready } = useAuth();
+export default async function ProfilePage() {
+  const session = await auth();
+  const user: User | null = session?.user?.id ? await Users.byId(session.user.id) : null;
+  if (!user) return null;
+  const department = user.department_id ? await Departments.byId(user.department_id) : null;
 
-  if (!ready || !currentUser) {
-    return (
-      <div className="min-h-[40vh] flex items-center justify-center text-[var(--text-tertiary)]">
-        Loading...
-      </div>
-    );
-  }
-
-  return <ProfileClient user={currentUser} />;
+  return (
+    <ProfileClient
+      user={{
+        ...user,
+        role: session!.user.role as UserRole,
+      }}
+      departmentName={department?.name ?? null}
+    />
+  );
 }

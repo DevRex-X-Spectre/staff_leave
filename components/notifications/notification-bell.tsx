@@ -1,35 +1,30 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn, timeAgo } from '@/lib/utils';
 import { Bell } from 'lucide-react';
-import { useTransition } from 'react';
-import { timeAgo } from '@/lib/utils';
-import { useState } from 'react';
-import { useAuth } from '@/components/providers/auth-provider';
-import {
-  useNotifications,
-  useUnreadCount,
-} from '@/lib/local/data-hooks';
-import { Notifications as NotificationsStore } from '@/lib/local/store';
+import { useState, useTransition } from 'react';
+import type { Notification } from '@/types';
+import { markAllNotificationsReadAction, markNotificationReadAction } from '@/app/actions/notifications';
 
-export function NotificationBell() {
-  const { currentUser } = useAuth();
-  const userId = currentUser?.id ?? null;
-  const notifications = useNotifications(userId);
-  const count = useUnreadCount(userId);
+export function NotificationBell({
+  notifications,
+  count,
+}: {
+  notifications: Notification[];
+  count: number;
+}) {
   const [open, setOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   const handleMarkRead = (id: string) => {
     startTransition(() => {
-      NotificationsStore.markRead(id);
+      void markNotificationReadAction(id);
     });
   };
 
   const handleMarkAll = () => {
-    if (!userId) return;
     startTransition(() => {
-      NotificationsStore.markAllRead(userId);
+      void markAllNotificationsReadAction();
     });
   };
 
@@ -92,7 +87,9 @@ export function NotificationBell() {
                       'px-4 py-3 hover:bg-[var(--bg-hover)] transition-colors cursor-pointer',
                       !n.is_read && 'bg-[var(--accent-bg)]'
                     )}
-                    onClick={() => { if (!n.is_read) handleMarkRead(n.id); }}
+                    onClick={() => {
+                      if (!n.is_read) handleMarkRead(n.id);
+                    }}
                   >
                     <div className="flex items-start gap-2">
                       {!n.is_read && (

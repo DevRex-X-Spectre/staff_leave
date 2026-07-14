@@ -21,9 +21,7 @@ export function LandingPage() {
       <header className="bg-[var(--paper,#f4f4f4)] border-b border-[var(--silver,#e5e7eb)]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="w-7 h-7 bg-[var(--ink)] rounded-[var(--radius-md)] inline-flex items-center justify-center text-white text-[11px] font-bold tracking-tight">
-              NA
-            </span>
+            <img src="/naub-logo.png" alt="NAUB logo" className="w-8 h-8 rounded-full shrink-0" />
             <span
               className="text-[13px] font-semibold tracking-tight text-[var(--graphite,#242424)]"
               style={{ fontFamily: 'var(--font-cal-sans-ui)' }}
@@ -158,9 +156,7 @@ export function LandingPage() {
             {/* Brand */}
             <div>
               <Link href="/" className="inline-flex items-center gap-2">
-                <span className="w-7 h-7 bg-[var(--ink)] rounded-[var(--radius-md)] inline-flex items-center justify-center text-white text-[11px] font-bold tracking-tight">
-                  NA
-                </span>
+                <img src="/naub-logo.png" alt="NAUB logo" className="w-8 h-8 rounded-full shrink-0" />
                 <span
                   className="text-[13px] font-semibold tracking-tight text-[var(--graphite,#242424)]"
                   style={{ fontFamily: 'var(--font-cal-sans)' }}

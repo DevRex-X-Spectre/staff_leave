@@ -5,6 +5,9 @@
 
 export type UserRole = 'admin' | 'hod' | 'hr_manager' | 'staff';
 export type StaffType = 'academic' | 'non_academic';
+/** Refinement for non-academic staff. Null for academic staff. Drives annual
+ *  leave entitlement (senior = 30, junior = 21 working days). */
+export type StaffGrade = 'senior' | 'junior';
 export type LeaveStatus =
   | 'pending'
   | 'hod_approved'
@@ -42,6 +45,13 @@ export type User = {
   staff_id: string | null;
   role: UserRole;
   staff_type: StaffType;
+  /** Senior/junior level for non-academic staff. Null when academic. Drives
+   *  the 30/21-day annual entitlement. */
+  staff_grade: StaffGrade | null;
+  /** Job title / academic rank (e.g. "Lecturer II", "Professor",
+   *  "Assistant Registrar"). Snapshotted onto leave_applications.applicant_rank
+   *  at apply time so historical applications retain the rank held then. */
+  rank: string | null;
   department_id: string | null;
   is_approved: boolean;
   is_active: boolean;
@@ -86,6 +96,18 @@ export type LeaveApplication = {
   supporting_doc_url: string | null;
   status: LeaveStatus;
   rota_conflict: boolean;
+  /** Staff nominated to cover the applicant's duties during this leave. */
+  cover_staff_id: string | null;
+  // FORM 1A + applicant-context snapshots, captured at apply time so the PDF
+  // stays accurate even if the user later changes rank/department/name.
+  /** FORM 1A Part I field 4: location during leave. Required for casual leave. */
+  destination: string | null;
+  /** Snapshot of users.rank at apply time (Registrar requires this). */
+  applicant_rank: string | null;
+  /** Snapshot of users.staff_id at apply time (Registrar requires this). */
+  applicant_staff_id: string | null;
+  /** Snapshot of users.full_name at apply time (for the FORM 1A PDF). */
+  applicant_name: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -94,6 +116,7 @@ export type LeaveApplicationWithRelations = LeaveApplication & {
   applicant?: User | null;
   leave_type?: LeaveType | null;
   department?: Department | null;
+  cover_staff?: User | null;
 };
 
 export type LeaveApproval = {
@@ -103,6 +126,9 @@ export type LeaveApproval = {
   approver_role: UserRole;
   decision: ApprovalDecision;
   comment: string | null;
+  /** FORM 1A finance decision (casual leave only).
+   *  HOD records 'department' | 'applicant'; Registrar records 'university' | 'applicant'. */
+  how_financed: 'department' | 'applicant' | 'university' | null;
   decided_at: string;
 };
 

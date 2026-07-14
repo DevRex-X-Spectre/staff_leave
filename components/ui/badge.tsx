@@ -93,6 +93,28 @@ export function RoleBadge({ role }: { role: string }) {
 }
 
 /* -------------------------------------------------------------------------
+   GradeBadge - SN (senior) / JS (junior) for non-academic staff.
+   Renders nothing for academic staff (grade is null).
+   ------------------------------------------------------------------------- */
+export function GradeBadge({ grade }: { grade: 'senior' | 'junior' | null | undefined }) {
+  if (!grade) return null;
+  const isSenior = grade === 'senior';
+  return (
+    <span
+      title={isSenior ? 'Senior non-academic' : 'Junior non-academic'}
+      className={cn(
+        'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide',
+        isSenior
+          ? 'bg-[var(--accent-bg)] text-[var(--accent)] border border-[var(--accent)]/20'
+          : 'bg-[var(--bg-subtle)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
+      )}
+    >
+      {isSenior ? 'SN' : 'JS'}
+    </span>
+  );
+}
+
+/* -------------------------------------------------------------------------
    Generic Badge
    ------------------------------------------------------------------------- */
 export function Badge({

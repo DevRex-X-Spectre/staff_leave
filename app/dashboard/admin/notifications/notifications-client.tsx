@@ -3,14 +3,14 @@
 import { PageHeader, EmptyState } from '@/components/ui/stat-card';
 import { Card } from '@/components/ui/card';
 import { timeAgo } from '@/lib/utils';
-import { useNotifications } from '@/lib/local/data-hooks';
-import { useAuth } from '@/components/providers/auth-provider';
 import { Bell } from 'lucide-react';
+import type { Notification } from '@/types';
 
-export function AdminNotificationsClient() {
-  const { currentUser } = useAuth();
-  const userId = currentUser?.id ?? null;
-  const notifications = useNotifications(userId);
+export function AdminNotificationsClient({
+  notifications,
+}: {
+  notifications: Notification[];
+}) {
 
   return (
     <div className="animate-fade-in">

@@ -1,21 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  LogOut,
-  ChevronDown,
-  Shield,
-  User,
-  Menu,
-  UserCircle,
-} from 'lucide-react';
-import { useState, useTransition } from 'react';
+import { signOut } from 'next-auth/react';
+import { LogOut, ChevronDown, Menu, UserCircle } from 'lucide-react';
 import { initials } from '@/lib/utils';
 import { NotificationBell } from '@/components/notifications/notification-bell';
-import { useAuth } from '@/components/providers/auth-provider';
-import { dashboardPathFor } from '@/lib/local/routes';
 import Link from 'next/link';
+import type { Notification, UserRole } from '@/types';
 
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Administrator',
@@ -26,43 +19,34 @@ const ROLE_LABEL: Record<string, string> = {
 
 export function TopBar({
   user,
+  notifications,
+  unreadCount,
   onMenuClick,
 }: {
   user: {
     id: string;
     full_name: string;
-    role: string;
+    role: UserRole;
     email: string;
     staff_id: string | null;
     department?: { name: string } | null;
   };
+  notifications: Notification[];
+  unreadCount: number;
   onMenuClick?: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { switchUser, logout } = useAuth();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
 
-  const handleSwitchUser = (userId: string, role: string) => {
-    startTransition(() => {
-      switchUser(userId);
-      setUserMenuOpen(false);
-      router.push(dashboardPathFor(role as 'admin' | 'hod' | 'hr_manager' | 'staff'));
-    });
-  };
-
-  const handleSignOut = () => {
-    startTransition(() => {
-      logout();
-      setUserMenuOpen(false);
-      router.push('/login');
-    });
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.push('/login');
+    router.refresh();
   };
 
   return (
     <header className="h-14 flex items-center justify-between gap-2 px-3 sm:px-4 lg:px-6 border-b border-[var(--border-subtle)] bg-[var(--bg-card)] shrink-0 sticky top-0 z-30">
-      {/* Left: hamburger (mobile) + page title */}
       <div className="flex items-center gap-2 min-w-0">
         {onMenuClick && (
           <button
@@ -79,18 +63,16 @@ export function TopBar({
         </span>
       </div>
 
-      {/* Right controls */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-        <NotificationBell />
+        <NotificationBell notifications={notifications} count={unreadCount} />
 
-        {/* User menu */}
         <div className="relative">
           <button
-            onClick={() => setUserMenuOpen((o) => !o)}
+            onClick={() => setOpen((o) => !o)}
             className={cn(
               'flex items-center gap-2 pl-1.5 pr-2 sm:pr-3 py-1.5 rounded-[var(--radius-md)]',
               'hover:bg-[var(--bg-hover)] transition-colors',
-              userMenuOpen && 'bg-[var(--bg-hover)]'
+              open && 'bg-[var(--bg-hover)]'
             )}
             aria-label="User menu"
           >
@@ -110,14 +92,9 @@ export function TopBar({
             <ChevronDown size={13} className="text-[var(--text-tertiary)] hidden sm:block" />
           </button>
 
-          {userMenuOpen && (
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setUserMenuOpen(false)}
-            />
-          )}
+          {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
 
-          {userMenuOpen && (
+          {open && (
             <div
               className={cn(
                 'absolute right-0 top-full mt-1 w-64 sm:w-56',
@@ -127,7 +104,6 @@ export function TopBar({
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* User info */}
               <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
                 <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">
                   {user.full_name}
@@ -147,11 +123,10 @@ export function TopBar({
                 )}
               </div>
 
-              {/* Profile link */}
               <div className="px-2 py-2 border-b border-[var(--border-subtle)]">
                 <Link
                   href="/dashboard/profile"
-                  onClick={() => setUserMenuOpen(false)}
+                  onClick={() => setOpen(false)}
                   className={cn(
                     'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--radius-md)]',
                     'text-[13px] hover:bg-[var(--bg-hover)] transition-colors',
@@ -163,32 +138,6 @@ export function TopBar({
                 </Link>
               </div>
 
-              {/* Demo user switcher */}
-              <div className="px-2 py-2 border-b border-[var(--border-subtle)]">
-                <p className="text-[10px] uppercase tracking-widest text-[var(--text-tertiary)] px-2 mb-1">
-                  Demo: switch user
-                </p>
-                {DEMO_USERS.map((du) => (
-                  <button
-                    key={du.id}
-                    onClick={() => handleSwitchUser(du.id, du.role)}
-                    disabled={du.id === user.id}
-                    className={cn(
-                      'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--radius-md)] text-left',
-                      'text-[13px] hover:bg-[var(--bg-hover)] transition-colors',
-                      'disabled:opacity-50 disabled:cursor-default'
-                    )}
-                  >
-                    <du.icon size={14} className="text-[var(--text-tertiary)] shrink-0" />
-                    <span className="text-[var(--text-secondary)] truncate flex-1">{du.name}</span>
-                    <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase shrink-0 bg-[var(--bg-subtle)] text-[var(--text-tertiary)]">
-                      {ROLE_LABEL[du.role] ?? du.role}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Sign out */}
               <div className="px-2 py-2">
                 <button
                   type="button"
@@ -209,13 +158,6 @@ export function TopBar({
     </header>
   );
 }
-
-const DEMO_USERS = [
-  { id: 'user-admin', name: 'System Admin', role: 'admin', icon: Shield },
-  { id: 'user-hod-cs', name: 'Dr. Chukwuma Okeke', role: 'hod', icon: User },
-  { id: 'user-hr', name: 'Amina Bello', role: 'hr_manager', icon: User },
-  { id: 'user-staff-1', name: 'Engr. Samuel Adekunle', role: 'staff', icon: User },
-];
 
 function pageTitleFromPath(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);

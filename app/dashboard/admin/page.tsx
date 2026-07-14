@@ -1,10 +1,26 @@
-'use client';
-
-import { useAuth } from '@/components/providers/auth-provider';
+import { Departments, LeaveTypes, UAR, Users } from '@/lib/db';
 import { AdminDashboardClient } from './admin-dashboard-client';
+import type {
+  Department,
+  LeaveType,
+  User,
+  UserApprovalRequestWithRelations,
+} from '@/types';
 
-export default function AdminDashboardPage() {
-  const { currentUser, ready } = useAuth();
-  if (!ready || !currentUser) return null;
-  return <AdminDashboardClient />;
+export default async function AdminDashboardPage() {
+  const [pending, allUsers, depts, leaveTypes] = await Promise.all([
+    UAR.byStatus('pending'),
+    Users.all(),
+    Departments.all(),
+    LeaveTypes.all(),
+  ]);
+
+  return (
+    <AdminDashboardClient
+      pending={pending}
+      allUsers={allUsers}
+      departments={depts}
+      leaveTypes={leaveTypes}
+    />
+  );
 }

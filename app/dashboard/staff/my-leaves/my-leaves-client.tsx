@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { PageHeader } from '@/components/ui/stat-card';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,28 +10,37 @@ import { ConfirmDialog } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/stat-card';
 import { formatDate } from '@/lib/utils';
 import { LeaveTracker } from '@/components/leave/leave-tracker';
-import { useApplications } from '@/lib/local/data-hooks';
-import { Applications as ApplicationsStore } from '@/lib/local/store';
-import { Calendar } from 'lucide-react';
+import { cancelLeaveAction } from '@/app/actions/leave';
+import { downloadLeaveApprovalPdf } from '@/lib/pdf';
+import type { LeaveApproval, LeaveApplicationWithRelations } from '@/types';
+import { Calendar, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function MyLeavesClient({ userId }: { userId: string }) {
-  const applications = useApplications({ applicantId: userId });
+export function MyLeavesClient({
+  applications,
+  approvalsByApplication,
+}: {
+  applications: LeaveApplicationWithRelations[];
+  approvalsByApplication: Record<string, LeaveApproval[]>;
+}) {
   const [selected, setSelected] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   const handleCancel = (id: string) => {
     setCancelling(id);
-    try {
-      ApplicationsStore.update(id, { status: 'cancelled' });
-      toast.success('Application cancelled.');
-    } catch (e) {
-      toast.error(String(e));
-    } finally {
+    startTransition(async () => {
+      const result = await cancelLeaveAction(id);
+      if (result.ok) {
+        toast.success('Application cancelled.');
+      } else {
+        toast.error(result.message);
+      }
       setCancelling(null);
       setShowCancel(null);
-    }
+      setSelected(null);
+    });
   };
 
   const selectedApp = applications.find((a) => a.id === selected) ?? null;
@@ -90,18 +99,37 @@ export function MyLeavesClient({ userId }: { userId: string }) {
                       {formatDate(app.created_at)}
                     </td>
                     <td className="py-3 px-3 sm:px-4">
-                      {(app.status === 'pending' || app.status === 'hod_approved') && (
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowCancel(app.id);
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {(app.status === 'pending' || app.status === 'hod_approved') && (
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowCancel(app.id);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                        {app.status === 'approved' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              try {
+                                downloadLeaveApprovalPdf(app, approvalsByApplication[app.id] ?? []);
+                              } catch (error) {
+                                toast.error(error instanceof Error ? error.message : 'Could not create PDF.');
+                              }
+                            }}
+                          >
+                            <Download size={13} />
+                            PDF
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -121,7 +149,7 @@ export function MyLeavesClient({ userId }: { userId: string }) {
         >
           <div className="space-y-5">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
+              <p className="text-[11px] text-center font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
                 Progress
               </p>
               <LeaveTracker status={selectedApp.status} />
@@ -129,11 +157,15 @@ export function MyLeavesClient({ userId }: { userId: string }) {
 
             <div className="space-y-2.5">
               {[
+                ['Staff ID', selectedApp.applicant_staff_id ?? selectedApp.applicant?.staff_id ?? '-'],
+                ['Rank', selectedApp.applicant_rank ?? selectedApp.applicant?.rank ?? '-'],
                 ['Leave type', selectedApp.leave_type?.name ?? '-'],
                 ['Department', selectedApp.department?.name ?? '-'],
                 ['Start date', formatDate(selectedApp.start_date)],
                 ['End date', formatDate(selectedApp.end_date)],
-                ['Total days', String(selectedApp.total_days)],
+                ['Working days', String(selectedApp.total_days)],
+                ...(selectedApp.destination ? [['Destination', selectedApp.destination] as [string, string]] : []),
+                ['Covering staff', selectedApp.cover_staff?.full_name ?? 'Not specified'],
                 ['Submitted', formatDate(selectedApp.created_at)],
               ].map(([label, value]) => (
                 <div
@@ -163,9 +195,27 @@ export function MyLeavesClient({ userId }: { userId: string }) {
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-[13px] text-[var(--text-secondary)]">Current status</span>
-              <StatusBadge status={selectedApp.status} />
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] text-[var(--text-secondary)]">Current status</span>
+                <StatusBadge status={selectedApp.status} />
+              </div>
+              {selectedApp.status === 'approved' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      downloadLeaveApprovalPdf(selectedApp, approvalsByApplication[selectedApp.id] ?? []);
+                    } catch (error) {
+                      toast.error(error instanceof Error ? error.message : 'Could not create PDF.');
+                    }
+                  }}
+                >
+                  <Download size={14} />
+                  Download approval PDF
+                </Button>
+              )}
             </div>
           </div>
         </Dialog>

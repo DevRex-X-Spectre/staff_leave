@@ -1,10 +1,8 @@
-'use client';
-
-import { useAuth } from '@/components/providers/auth-provider';
+import { Applications } from '@/lib/db';
 import { RegistrarDashboardClient } from './registrar-dashboard-client';
+import type { LeaveApplicationWithRelations } from '@/types';
 
-export default function RegistrarDashboardPage() {
-  const { currentUser, ready } = useAuth();
-  if (!ready || !currentUser) return null;
-  return <RegistrarDashboardClient />;
+export default async function RegistrarDashboardPage() {
+  const applications = await Applications.all();
+  return <RegistrarDashboardClient applications={applications} />;
 }

@@ -1,60 +1,61 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { PageHeader, EmptyState } from '@/components/ui/stat-card';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, FormField, Select } from '@/components/ui/input';
 import { Dialog, ConfirmDialog } from '@/components/ui/dialog';
-import { useDepartments, useUsers } from '@/lib/local/data-hooks';
-import { Departments } from '@/lib/local/store';
+import { createDepartmentAction, deleteDepartmentAction } from '@/app/actions/admin';
+import type { Department, User } from '@/types';
 import { Building2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function AdminDepartmentsClient() {
-  const departments = useDepartments();
-  const users = useUsers();
+export function AdminDepartmentsClient({
+  departments,
+  hods,
+}: {
+  departments: Department[];
+  hods: User[];
+}) {
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-
   const [newName, setNewName] = useState('');
   const [newHod, setNewHod] = useState('');
+  const [isPending, startTransition] = useTransition();
 
   const handleCreate = () => {
     if (!newName.trim()) {
       toast.error('Department name is required.');
       return;
     }
-    setCreating(true);
-    try {
-      Departments.insert({
+    startTransition(async () => {
+      const result = await createDepartmentAction({
         name: newName.trim(),
-        hod_id: newHod || null,
+        hodId: newHod || null,
       });
-      toast.success('Department created.');
-      setShowCreate(false);
-      setNewName('');
-      setNewHod('');
-    } catch (e) {
-      toast.error(String(e));
-    } finally {
-      setCreating(false);
-    }
+      if (result.ok) {
+        toast.success('Department created.');
+        setShowCreate(false);
+        setNewName('');
+        setNewHod('');
+      } else {
+        toast.error(result.message);
+      }
+    });
   };
 
   const handleDelete = (id: string) => {
-    try {
-      Departments.remove(id);
-      toast.success('Department deleted.');
-    } catch (e) {
-      toast.error(String(e));
-    } finally {
+    startTransition(async () => {
+      const result = await deleteDepartmentAction(id);
+      if (result.ok) {
+        toast.success('Department deleted.');
+      } else {
+        toast.error(result.message);
+      }
       setDeleteTarget(null);
-    }
+    });
   };
-
-  const hods = users.filter((u) => u.role === 'hod' && u.is_active);
 
   return (
     <div className="animate-fade-in">
@@ -85,7 +86,7 @@ export function AdminDepartmentsClient() {
         ) : (
           <div className="divide-y divide-[var(--border-subtle)]">
             {departments.map((dept) => {
-              const hod = users.find((u) => u.id === dept.hod_id);
+              const hod = hods.find((u) => u.id === dept.hod_id);
               return (
                 <div
                   key={dept.id}
@@ -136,8 +137,8 @@ export function AdminDepartmentsClient() {
           </div>
           <div className="flex justify-end gap-3 mt-5">
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button variant="ink" disabled={creating} onClick={handleCreate}>
-              {creating ? 'Creating...' : 'Create'}
+            <Button variant="ink" disabled={isPending} onClick={handleCreate}>
+              {isPending ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </Dialog>
@@ -148,7 +149,7 @@ export function AdminDepartmentsClient() {
           open
           onClose={() => setDeleteTarget(null)}
           onConfirm={() => handleDelete(deleteTarget)}
-          title={`Delete this department?`}
+          title="Delete this department?"
           description="This will remove the department. Existing staff may lose their department assignment."
           confirmLabel="Delete"
           variant="danger"

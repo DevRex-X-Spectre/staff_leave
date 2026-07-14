@@ -26,6 +26,9 @@ create table if not exists public.users (
   staff_id text unique,
   role text not null check (role in ('admin', 'hod', 'hr_manager', 'staff')),
   staff_type text not null check (staff_type in ('academic', 'non_academic')),
+  -- Senior/junior rank for non-academic staff (null for academic). Drives the
+  -- annual leave entitlement: senior = 30, junior = 21 working days.
+  staff_grade text check (staff_grade in ('senior', 'junior')),
   department_id uuid references public.departments(id),
   is_approved boolean not null default false,
   is_active boolean not null default true,
@@ -89,6 +92,8 @@ create table if not exists public.leave_applications (
   status text not null default 'pending'
     check (status in ('pending', 'hod_approved', 'approved', 'hod_rejected', 'rejected', 'cancelled')),
   rota_conflict boolean not null default false,
+  -- Staff nominated to cover the applicant's duties during the leave.
+  cover_staff_id uuid references public.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -358,41 +363,8 @@ create policy "uar_admin_write" on public.user_approval_requests
     exists (select 1 from public.users u where u.id = auth.uid() and u.role = 'admin')
   );
 
--- ============================================================================
--- SEED DATA - leave types, departments, default admin
--- ============================================================================
-
--- Departments
-insert into public.departments (id, name) values
-  ('11111111-1111-1111-1111-111111111111', 'Computer Science'),
-  ('22222222-2222-2222-2222-222222222222', 'Administration'),
-  ('33333333-3333-3333-3333-333333333333', 'Registry')
-on conflict (id) do nothing;
-
--- Leave types
-insert into public.leave_types (id, name, applicable_to, max_days_academic, max_days_non_academic, requires_document) values
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Annual Leave',     'both',         21,  21,  false),
-  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Sick Leave',       'both',         14,  14,  true),
-  ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Casual Leave',     'both',         7,   7,   false),
-  ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'Maternity Leave',  'non_academic', null,90,  true),
-  ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Paternity Leave',  'both',         7,   7,   false),
-  ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'Study Leave',      'academic',     365, null,true),
-  ('99999999-9999-9999-9999-999999999999', 'Compassionate Leave','both',       7,   7,   false)
-on conflict do nothing;
-
--- Default admin (password: Admin@NAUB2026) - see README to log in.
--- Note: this row references auth.users - to actually log in you must
--- first create the matching user via Supabase Auth (Auth → Users → Add user).
--- Once created, run:
---   insert into public.users (id, full_name, email, role, staff_type, department_id, is_approved, is_active, staff_id)
---   values (
---     '<auth-user-id>',
---     'System Administrator',
---     'admin@naub.edu.ng',
---     'admin',
---     'non_academic',
---     '22222222-2222-2222-2222-222222222222',
---     true,
---     true,
---     'NAUB/ADM/001'
---   );
+-- NOTE: all seed data (departments, leave types, users, credentials, entitlements,
+-- sample applications/rotas/notifications) is inserted by the TypeScript seed
+-- script `scripts/seed.ts` (run via `npm run seed`), which bcrypt-hashes the
+-- default password (NAUB@2026) and provisions grade-driven entitlements.
+-- Authentication is handled by NextAuth (see auth.ts), not Supabase Auth.

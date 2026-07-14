@@ -303,15 +303,104 @@ dialog::backdrop {
   --fc-button-hover-border-color: var(--ink);
   --fc-button-active-bg-color: var(--ink);
   --fc-button-active-border-color: var(--ink);
+  --fc-non-business-color: transparent;
   font-family: var(--font-inter);
   color: var(--text-primary);
 }
-.fc .fc-button {
-  border-radius: 9999px !important;
-  text-transform: capitalize;
+.fc a {
+  color: inherit;
+}
+
+/* Month grid - weekday headers */
+.fc .fc-col-header-cell-cushion {
+  padding: 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* Month grid - day cells */
+.fc-daygrid-day {
+  transition: background-color 0.15s ease;
+}
+.fc-daygrid-day:hover {
+  background-color: var(--bg-hover);
+}
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: var(--accent-bg);
+}
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  font-weight: 700;
+  color: var(--accent);
+}
+.fc .fc-daygrid-day-number {
+  padding: 4px 8px;
+  font-size: 12px;
   font-weight: 500;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Let our custom event pills render without FullCalendar's default block chrome */
+.fc-daygrid-event {
+  border-radius: 4px !important;
+  margin-top: 2px;
+}
+.fc-daygrid-day-frame {
+  min-height: 88px;
+  padding: 2px;
+}
+.fc-daygrid-event-harness {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+/* "+N more" link */
+.fc-daygrid-more-link,
+.fc-daygrid-week-more-link {
+  font-size: 10px !important;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 2px;
+  display: block;
+  text-align: center;
+}
+
+/* Our custom event pill (rendered via eventContent) */
+.fc-event-pill {
+  line-height: 1.2;
+}
+
+/* List view */
+.fc .fc-list {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.fc .fc-list-day-cushion,
+.fc .fc-list-day-text,
+.fc .fc-list-day-side-text {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-primary);
 }
+.fc .fc-list-event td {
+  padding: 6px 12px;
+}
+.fc .fc-list-event:hover td {
+  background-color: var(--bg-hover);
+}
+
+/* Keep the calendar inside its card on every viewport (no page overflow) */
+.fc-view-harness,
+.fc-view,
+.fc-scrollgrid {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 .fc .fc-toolbar-title {
   font-family: var(--font-cal-sans);
   font-weight: 600;

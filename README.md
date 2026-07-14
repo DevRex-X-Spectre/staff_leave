@@ -1,37 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NAUB Staff Leave Management System
 
-## Getting Started
+Leave management for the Nigerian Army University, Biu. Four roles — **Staff**, **HOD**, **Registrar** (`hr_manager`), and **Admin** — with a full approval workflow, entitlement tracking, rota publishing, notifications, and Excel/PDF reports.
 
-First, run the development server:
+Built on **Next.js 16** (App Router, Turbopack), **Auth.js v5 (NextAuth)** credentials auth, **Supabase (Postgres)**, and Tailwind v4.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Architecture
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Auth:** NextAuth Credentials provider authenticates by **staff ID + bcrypt-hashed password** (table `public.user_credentials`). Identity is owned by NextAuth — Supabase Auth is not used. Sessions are JWT.
+- **Data access:** server-only. Every read runs in a Server Component (or Server Action) through the Supabase **service-role** client in [`lib/db/client.ts`](lib/db/client.ts); every write runs through an authorised, validated Server Action in [`app/actions/`](app/actions/). RLS is disabled and authorization is enforced in the app layer ([`lib/authz.ts`](lib/authz.ts)).
+- **Pages:** each dashboard route is an async Server Component that reads `auth()` + fetches via the DAL, then hands typed props to a `*-client.tsx` island. Mutations call Server Actions via `useTransition`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 20+
+- A Supabase project (cloud at https://supabase.com/dashboard, or local via the Supabase CLI)
 
-## Learn More
+## Setup
 
-To learn more about Next.js, take a look at the following resources:
+1. **Install dependencies**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Configure environment** — copy the template and fill it in:
 
-## Deploy on Vercel
+   ```bash
+   cp .env.example .env.local
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   Set in `.env.local`:
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` — from your Supabase project's *Project Settings → API*.
+   - `AUTH_SECRET` — generate with `openssl rand -base64 32` (on Windows PowerShell: `[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))`).
+   - `AUTH_TRUST_HOST=true`.
+   - `RESEND_API_KEY` — optional; if unset, email notifications are logged to the server console instead of sent.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# staff_leave
+3. **Apply the database schema.** In the Supabase dashboard open the SQL editor and run, in order:
+   - [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql)
+   - [`supabase/migrations/002_nextauth_schema.sql`](supabase/migrations/002_nextauth_schema.sql)
+   - [`supabase/migrations/003_form1a_and_rank.sql`](supabase/migrations/003_form1a_and_rank.sql)
+
+   (Or, with the Supabase CLI: `supabase db push`.)
+
+4. **Seed the demo dataset** (departments, leave types, 9 users with password `NAUB@2026`, grade-driven entitlements, sample applications/rotas/notifications):
+
+   ```bash
+   npm run seed
+   ```
+
+   The seed is idempotent — re-running refreshes the demo rows without duplicating or wiping admin-added data.
+
+5. **Run the dev server:**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open http://localhost:3000 and sign in.
+
+## Seeded test accounts
+
+All use the default password **`NAUB@2026`** (change it from *My Profile* after signing in):
+
+| Staff ID          | Role      | Name                    |
+|-------------------|-----------|-------------------------|
+| `NAUB/ADM/SN001`  | Admin     | System Administrator    |
+| `NAUB/CS/001`     | HOD       | Dr. Chukwuma Okeke      |
+| `NAUB/REG/SN001`  | Registrar | Amina Bello             |
+| `NAUB/CS/010`     | Staff     | Engr. Samuel Adekunle   |
+
+There is also a pending account request (`NAUB/CS/099`) awaiting admin approval in `/dashboard/admin/approvals`.
+
+## Scripts
+
+- `npm run dev` — start the dev server
+- `npm run build` — production build
+- `npm run start` — serve the production build
+- `npm run seed` — seed/refresh the demo dataset in Supabase
+- `npm run lint` — run ESLint
+
+## Notable files
+
+- [`auth.ts`](auth.ts) / [`auth.config.ts`](auth.config.ts) — NextAuth config (Credentials provider, JWT callbacks).
+- [`proxy.ts`](proxy.ts) — edge auth guard (Next.js 16 renamed `middleware` to `proxy`).
+- [`lib/db/`](lib/db/) — server-only Supabase DAL (repo objects mirroring the schema).
+- [`app/actions/`](app/actions/) — authorised, validated Server Actions for every mutation.
+- [`lib/entitlements.ts`](lib/entitlements.ts) — grade-driven annual leave policy (academic = 30, non-academic senior = 30, junior = 21 working days).
+- [`scripts/seed.ts`](scripts/seed.ts) — the demo dataset seed.

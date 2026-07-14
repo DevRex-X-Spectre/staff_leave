@@ -1,10 +1,8 @@
-'use client';
-
-import { useAuth } from '@/components/providers/auth-provider';
+import { LeaveTypes } from '@/lib/db';
 import { AdminLeaveTypesClient } from './leave-types-client';
+import type { LeaveType } from '@/types';
 
-export default function AdminLeaveTypesPage() {
-  const { ready, currentUser } = useAuth();
-  if (!ready || !currentUser) return null;
-  return <AdminLeaveTypesClient />;
+export default async function AdminLeaveTypesPage() {
+  const leaveTypes = await LeaveTypes.all();
+  return <AdminLeaveTypesClient leaveTypes={leaveTypes} />;
 }

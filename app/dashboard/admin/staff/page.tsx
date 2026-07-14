@@ -1,10 +1,14 @@
-'use client';
-
-import { useAuth } from '@/components/providers/auth-provider';
+import { Departments, Users } from '@/lib/db';
 import { AdminStaffClient } from './staff-client';
+import type { Department, User } from '@/types';
 
-export default function AdminStaffPage() {
-  const { ready, currentUser } = useAuth();
-  if (!ready || !currentUser) return null;
-  return <AdminStaffClient />;
+export default async function AdminStaffPage() {
+  const [allUsers, departments] = await Promise.all([
+    Users.all(),
+    Departments.all(),
+  ]);
+
+  return (
+    <AdminStaffClient users={allUsers} departments={departments} />
+  );
 }

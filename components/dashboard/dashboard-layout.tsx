@@ -1,20 +1,31 @@
 'use client';
 
+import { useState } from 'react';
 import { Sidebar } from './sidebar';
 import { TopBar } from './topbar';
-import { useState } from 'react';
-import { useAuth } from '@/components/providers/auth-provider';
-import { useDepartment } from '@/lib/local/data-hooks';
+import type { Notification, UserRole } from '@/types';
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { currentUser } = useAuth();
+export type ShellUser = {
+  id: string;
+  full_name: string;
+  role: UserRole;
+  email: string;
+  staff_id: string | null;
+  department: { name: string } | null;
+};
+
+export function DashboardShell({
+  user,
+  notifications,
+  unreadCount,
+  children,
+}: {
+  user: ShellUser;
+  notifications: Notification[];
+  unreadCount: number;
+  children: React.ReactNode;
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const department = useDepartment(currentUser?.department_id ?? null);
-
-  // currentUser is guaranteed non-null when this shell renders (the parent
-  // layout gates rendering on auth.ready + currentUser). The non-null
-  // assertion below makes the user object usable for downstream children.
-  const user = currentUser!;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-page)]">
@@ -23,17 +34,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         mobileOpen={mobileOpen}
         onMobileOpenChange={setMobileOpen}
       />
-
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar
-          user={{
-            id: user.id,
-            full_name: user.full_name,
-            role: user.role,
-            email: user.email,
-            staff_id: user.staff_id,
-            department,
-          }}
+          user={user}
+          notifications={notifications}
+          unreadCount={unreadCount}
           onMenuClick={() => setMobileOpen(true)}
         />
         <main className="flex-1 overflow-y-auto animate-fade-in">

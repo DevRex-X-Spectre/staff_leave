@@ -238,9 +238,7 @@ function SidebarContent({
       {/* Brand + (mobile) close button */}
       <div className="px-4 py-5 border-b border-[var(--border-subtle)] flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-7 h-7 bg-[var(--ink)] rounded-[var(--radius-md)] flex items-center justify-center shrink-0">
-            <span className="text-white text-[11px] font-bold tracking-tight">NA</span>
-          </div>
+          <img src="/naub-logo.png" alt="NAUB logo" className="w-8 h-8 rounded-full shrink-0" />
           <div className="min-w-0">
             <p className="text-[13px] font-semibold text-[var(--text-primary)] leading-none">
               NAUB LMS

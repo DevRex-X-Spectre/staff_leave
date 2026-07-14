@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { PageHeader, EmptyState } from '@/components/ui/stat-card';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,21 +8,23 @@ import { RequestStatusBadge, RoleBadge } from '@/components/ui/badge';
 import { Dialog } from '@/components/ui/dialog';
 import { Textarea, FormField } from '@/components/ui/input';
 import { CheckCircle, XCircle } from 'lucide-react';
-import { useApprovalRequests } from '@/lib/local/data-hooks';
-import { useAuth } from '@/components/providers/auth-provider';
-import { Notifications, UAR, Users } from '@/lib/local/store';
+import { approveUserAction, rejectUserAction } from '@/app/actions/admin';
 import { timeAgo } from '@/lib/utils';
 import { toast } from 'sonner';
+import type { UserApprovalRequestWithRelations } from '@/types';
 
 type Filter = 'pending' | 'approved' | 'rejected' | 'all';
 
-export function AdminApprovalsClient() {
-  const { currentUser } = useAuth();
-  const requests = useApprovalRequests();
+export function AdminApprovalsClient({
+  requests,
+}: {
+  requests: UserApprovalRequestWithRelations[];
+}) {
   const [filter, setFilter] = useState<Filter>('pending');
   const [showReject, setShowReject] = useState<string | null>(null);
   const [rejectComment, setRejectComment] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   // Filter in-memory so we don't need a server round-trip per filter change.
   const filtered = useMemo(
@@ -30,68 +32,41 @@ export function AdminApprovalsClient() {
     [filter, requests]
   );
 
-  const handleApprove = async (requestId: string) => {
-    if (!currentUser) return;
-    const req = requests.find((r) => r.id === requestId);
-    if (!req) return;
+  const handleApprove = (requestId: string) => {
     setProcessing(requestId);
-    try {
-      UAR.update(requestId, {
-        status: 'approved',
-        admin_comment: null,
-        reviewed_by: currentUser.id,
-        reviewed_at: new Date().toISOString(),
-      });
-      Users.update(req.user_id, { is_approved: true });
-      Notifications.insert({
-        user_id: req.user_id,
-        title: 'Account approved',
-        message: 'Your NAUB LMS account has been approved. You can now log in.',
-        type: 'account_approved',
-        is_read: false,
-        related_application_id: null,
-      });
-      toast.success('User approved!');
-    } catch (e) {
-      toast.error(String(e));
-    } finally {
+    startTransition(async () => {
+      const result = await approveUserAction(requestId);
+      if (result.ok) {
+        toast.success(
+          result.created > 0
+            ? `User approved and ${result.created} leave entitlement${result.created !== 1 ? 's' : ''} provisioned.`
+            : 'User approved!'
+        );
+      } else {
+        toast.error(result.message);
+      }
       setProcessing(null);
       setShowReject(null);
-    }
+    });
   };
 
-  const handleReject = async (requestId: string) => {
+  const handleReject = (requestId: string) => {
     if (!rejectComment.trim()) {
       toast.error('Please provide a rejection reason.');
       return;
     }
-    if (!currentUser) return;
-    const req = requests.find((r) => r.id === requestId);
-    if (!req) return;
     setProcessing(requestId);
-    try {
-      UAR.update(requestId, {
-        status: 'rejected',
-        admin_comment: rejectComment.trim(),
-        reviewed_by: currentUser.id,
-        reviewed_at: new Date().toISOString(),
-      });
-      Notifications.insert({
-        user_id: req.user_id,
-        title: 'Account not approved',
-        message: rejectComment.trim(),
-        type: 'account_approved',
-        is_read: false,
-        related_application_id: null,
-      });
-      toast.success('User rejected.');
-    } catch (e) {
-      toast.error(String(e));
-    } finally {
+    startTransition(async () => {
+      const result = await rejectUserAction(requestId, rejectComment);
+      if (result.ok) {
+        toast.success('User rejected.');
+      } else {
+        toast.error(result.message);
+      }
       setProcessing(null);
       setShowReject(null);
       setRejectComment('');
-    }
+    });
   };
 
   return (

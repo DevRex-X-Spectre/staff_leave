@@ -4,9 +4,9 @@ import { useState, useTransition } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, FormField } from '@/components/ui/input';
-import { useAuth } from '@/components/providers/auth-provider';
-import { useDepartment } from '@/lib/local/data-hooks';
-import { DEFAULT_PASSWORD } from '@/lib/local/constants';
+import { GradeBadge } from '@/components/ui/badge';
+import { changePasswordAction } from '@/app/actions/auth';
+import { DEFAULT_PASSWORD } from '@/lib/constants';
 import type { User } from '@/types';
 import { toast } from 'sonner';
 import { initials } from '@/lib/utils';
@@ -19,15 +19,19 @@ const ROLE_LABEL: Record<string, string> = {
   staff: 'Staff Member',
 };
 
-export function ProfileClient({ user }: { user: User }) {
-  const department = useDepartment(user.department_id);
-  const { changePassword } = useAuth();
+export function ProfileClient({
+  user,
+  departmentName,
+}: {
+  user: User;
+  departmentName: string | null;
+}) {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
   const [isPending, startTransition] = useTransition();
 
-  const isUsingDefault = false; // we don't surface whether the password is the seed default
+  const isUsingDefault = false;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +40,7 @@ export function ProfileClient({ user }: { user: User }) {
       return;
     }
     startTransition(async () => {
-      const result = await changePassword(current, next);
+      const result = await changePasswordAction({ current, next });
       if (result.ok) {
         toast.success('Password changed. Sign in again next time with your new password.');
         setCurrent('');
@@ -80,12 +84,13 @@ export function ProfileClient({ user }: { user: User }) {
             </span>
           </div>
           <div className="min-w-0">
-            <p className="text-[16px] font-semibold text-[var(--text-primary)] truncate">
+            <p className="text-[16px] font-semibold text-[var(--text-primary)] truncate flex items-center gap-2">
               {user.full_name}
+              {user.staff_type === 'non_academic' && <GradeBadge grade={user.staff_grade} />}
             </p>
             <p className="text-[12px] text-[var(--text-tertiary)] truncate">
               {ROLE_LABEL[user.role] ?? user.role}
-              {department ? ` · ${department.name}` : ''}
+              {departmentName ? ` · ${departmentName}` : ''}
             </p>
           </div>
         </div>
@@ -120,6 +125,9 @@ export function ProfileClient({ user }: { user: User }) {
             </dt>
             <dd className="mt-0.5 text-[var(--text-primary)] capitalize">
               {user.staff_type.replace('_', ' ')}
+              {user.staff_type === 'non_academic' && user.staff_grade
+                ? ` (${user.staff_grade})`
+                : ''}
             </dd>
           </div>
         </dl>

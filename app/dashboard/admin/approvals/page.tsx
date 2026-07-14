@@ -1,10 +1,8 @@
-'use client';
-
-import { useAuth } from '@/components/providers/auth-provider';
+import { UAR } from '@/lib/db';
 import { AdminApprovalsClient } from './approvals-client';
+import type { UserApprovalRequestWithRelations } from '@/types';
 
-export default function AdminApprovalsPage() {
-  const { ready, currentUser } = useAuth();
-  if (!ready || !currentUser) return null;
-  return <AdminApprovalsClient />;
+export default async function AdminApprovalsPage() {
+  const requests = await UAR.all();
+  return <AdminApprovalsClient requests={requests} />;
 }

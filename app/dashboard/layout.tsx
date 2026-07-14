@@ -1,43 +1,40 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { Departments, Notifications } from '@/lib/db';
+import type { Notification, UserRole } from '@/types';
+import { DashboardShell } from '@/components/dashboard/dashboard-layout';
 
-import { useEffect, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/providers/auth-provider';
-import { DashboardLayout as DashboardShell } from '@/components/dashboard/dashboard-layout';
-
-/**
- * /dashboard layout - gates the whole subtree on auth and renders the
- * dashboard shell. Replaces the previous server-component DAL fetch.
- */
-export default function DashboardLayoutPage({
+export default async function DashboardLayout({
   children,
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
 }) {
-  const { currentUser, ready } = useAuth();
-  const router = useRouter();
+  const session = await auth();
+  if (!session?.user?.id) redirect('/login');
+  if (!session.user.isApproved) redirect('/pending-approval');
 
-  useEffect(() => {
-    if (ready && !currentUser) {
-      router.replace('/login');
-    }
-  }, [ready, currentUser, router]);
+  const [department, notifications, unreadCount] = await Promise.all([
+    Departments.byId(session.user.departmentId ?? ''),
+    Notifications.byUser(session.user.id),
+    Notifications.unreadCount(session.user.id),
+  ]);
 
-  if (!ready) {
-    return <FullScreenMessage message="Loading..." />;
-  }
-
-  if (!currentUser) {
-    return <FullScreenMessage message="Redirecting..." />;
-  }
-
-  return <DashboardShell>{children}</DashboardShell>;
-}
-
-function FullScreenMessage({ message }: { message: string }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-page)] text-[var(--text-tertiary)] text-[14px]">
-      {message}
-    </div>
+    <DashboardShell
+      user={{
+        id: session.user.id,
+        full_name: session.user.name ?? '',
+        role: session.user.role as UserRole,
+        email: session.user.email ?? '',
+        staff_id: session.user.staffId,
+        department: department ? { name: department.name } : null,
+      }}
+      notifications={notifications}
+      unreadCount={unreadCount}
+    >
+      {children}
+    </DashboardShell>
   );
 }
+
+export type { Notification };

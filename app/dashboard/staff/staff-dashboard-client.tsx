@@ -8,18 +8,19 @@ import { StatusBadge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { CalendarDays, Plus } from 'lucide-react';
-import { useApplications, useDepartment, useLeaveBalances } from '@/lib/local/data-hooks';
-import { useAuth } from '@/components/providers/auth-provider';
+import type { Department, LeaveApplicationWithRelations, LeaveBalance } from '@/types';
 
-export function StaffDashboardClient() {
-  const { currentUser } = useAuth();
-  const userId = currentUser?.id ?? null;
-  const departmentId = currentUser?.department_id ?? null;
-
-  const balances = useLeaveBalances(userId);
-  const applications = useApplications({ applicantId: userId ?? undefined });
-  const department = useDepartment(departmentId);
-
+export function StaffDashboardClient({
+  userName,
+  department,
+  balances,
+  applications,
+}: {
+  userName: string;
+  department: Department | null;
+  balances: LeaveBalance[];
+  applications: LeaveApplicationWithRelations[];
+}) {
   const { pending, approved } = useMemo(() => {
     return {
       pending: applications.filter((a) => a.status === 'pending').length,
@@ -30,7 +31,7 @@ export function StaffDashboardClient() {
   return (
     <div className="animate-fade-in">
       <PageHeader
-        title={`Welcome back, ${currentUser?.full_name?.split(' ')[0] ?? ''}`}
+        title={`Welcome back, ${userName.split(' ')[0] ?? ''}`}
         description={department ? `Department: ${department.name}` : undefined}
         actions={
           <Link href="/dashboard/staff/apply">

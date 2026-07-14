@@ -7,23 +7,20 @@ import { Button } from '@/components/ui/button';
 import { formatDate, timeAgo } from '@/lib/utils';
 import Link from 'next/link';
 import { Clock, CheckCircle, CalendarRange } from 'lucide-react';
-import {
-  useApplications,
-  useDepartment,
-} from '@/lib/local/data-hooks';
-import { useAuth } from '@/components/providers/auth-provider';
+import type {
+  Department,
+  LeaveApplicationWithRelations,
+} from '@/types';
 
-export function HodDashboardClient() {
-  const { currentUser } = useAuth();
-  const departmentId = currentUser?.department_id ?? null;
-
-  const department = useDepartment(departmentId);
-  const pendingApps = useApplications({
-    departmentId: departmentId ?? undefined,
-    status: ['pending'],
-  });
-  const allApps = useApplications({ departmentId: departmentId ?? undefined });
-
+export function HodDashboardClient({
+  department,
+  pendingApps,
+  allApps,
+}: {
+  department: Department | null;
+  pendingApps: LeaveApplicationWithRelations[];
+  allApps: LeaveApplicationWithRelations[];
+}) {
   const { approved, awaiting } = useMemo(() => {
     return {
       approved: allApps.filter((a) => a.status === 'approved').length,

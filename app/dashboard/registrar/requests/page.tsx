@@ -1,10 +1,8 @@
-'use client';
-
-import { useAuth } from '@/components/providers/auth-provider';
+import { Applications } from '@/lib/db';
 import { RegistrarRequestsClient } from './registrar-requests-client';
+import type { LeaveApplicationWithRelations } from '@/types';
 
-export default function RegistrarRequestsPage() {
-  const { ready, currentUser } = useAuth();
-  if (!ready || !currentUser) return null;
-  return <RegistrarRequestsClient />;
+export default async function RegistrarRequestsPage() {
+  const applications = await Applications.byStatus('hod_approved');
+  return <RegistrarRequestsClient applications={applications} />;
 }

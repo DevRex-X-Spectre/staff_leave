@@ -1,26 +1,30 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { PageHeader, EmptyState } from '@/components/ui/stat-card';
-import { Card, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/stat-card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, FormField, Select } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
-import { formatDate } from '@/lib/utils';
-import {
-  useActiveLeaveTypes,
-  useUsers,
-} from '@/lib/local/data-hooks';
-import { Entitlements } from '@/lib/local/store';
-import { BarChart3, Plus, Minus } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
+import { adjustEntitlementAction } from '@/app/actions/admin';
 import type { LeaveEntitlement, LeaveType, User } from '@/types';
 import { toast } from 'sonner';
+import { useTransition } from 'react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-export function EntitlementsClient() {
-  const allUsers = useUsers();
-  const leaveTypes = useActiveLeaveTypes();
+export function EntitlementsClient({
+  staff,
+  leaveTypes,
+  entitlementsByUser,
+  departmentIds,
+}: {
+  staff: User[];
+  leaveTypes: LeaveType[];
+  entitlementsByUser: Record<string, LeaveEntitlement[]>;
+  departmentIds: string[];
+}) {
   const [filterDept, setFilterDept] = useState('');
   const [adjustTarget, setAdjustTarget] = useState<{
     entitlementId: string;
@@ -28,65 +32,32 @@ export function EntitlementsClient() {
     current: number;
   } | null>(null);
   const [delta, setDelta] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
-  // Bumped on every mutation so the matrix re-reads fresh entitlements.
-  const [tick, setTick] = useState(0);
+  const [isPending, startTransition] = useTransition();
 
-  const staff = useMemo(
-    () => allUsers.filter((u) => u.role === 'staff' && u.is_active),
-    [allUsers]
+  const filtered = useMemo(
+    () =>
+      staff.filter((u) => {
+        if (filterDept && u.department_id !== filterDept) return false;
+        return true;
+      }),
+    [staff, filterDept]
   );
-
-  // Resolve entitlements per user. Reads straight from the localStorage store
-  // so any mutation (adjust dialog, approval deduction) shows up immediately.
-  const entitlementsByUser = useMemo(() => {
-    // tick is included so the memo recomputes on each adjustment
-    void tick;
-    const map: Record<string, LeaveEntitlement[]> = {};
-    for (const u of staff) {
-      map[u.id] = Entitlements.byUser(u.id, CURRENT_YEAR);
-    }
-    return map;
-  }, [staff, tick]);
-
-  const filtered = staff.filter((u) => {
-    if (filterDept && u.department_id !== filterDept) return false;
-    return true;
-  });
 
   const activeTypes = leaveTypes;
 
-  const handleAdjust = async () => {
+  const handleAdjust = () => {
     if (!adjustTarget || delta === 0) return;
-    setSubmitting(true);
-    try {
-      const ent = Entitlements.byId(adjustTarget.entitlementId);
-      if (!ent) {
-        toast.error('Entitlement not found.');
-        return;
+    startTransition(async () => {
+      const result = await adjustEntitlementAction(adjustTarget.entitlementId, delta);
+      if (result.ok) {
+        toast.success(`Balance adjusted by ${delta > 0 ? '+' : ''}${delta} days.`);
+        setAdjustTarget(null);
+        setDelta(0);
+      } else {
+        toast.error(result.message);
       }
-      Entitlements.update(adjustTarget.entitlementId, {
-        total_days: Math.max(0, ent.total_days + delta),
-      });
-      toast.success(`Balance adjusted by ${delta > 0 ? '+' : ''}${delta} days.`);
-      setAdjustTarget(null);
-      setDelta(0);
-      // Force the matrix to re-read entitlements.
-      setTick((t) => t + 1);
-    } catch (e) {
-      toast.error(String(e instanceof Error ? e.message : String(e)));
-    } finally {
-      setSubmitting(false);
-    }
+    });
   };
-
-  const departments = Array.from(
-    new Set(
-      staff
-        .filter((u): u is User & { department_id: string } => u.department_id !== null)
-        .map((u) => u.department_id)
-    )
-  );
 
   return (
     <div className="animate-fade-in">
@@ -103,7 +74,7 @@ export function EntitlementsClient() {
           className="w-48"
         >
           <option value="">All departments</option>
-          {departments.map((id) => (
+          {departmentIds.map((id) => (
             <option key={id} value={id}>{id}</option>
           ))}
         </Select>
@@ -219,10 +190,10 @@ export function EntitlementsClient() {
             </Button>
             <Button
               variant="ink"
-              disabled={delta === 0}
+              disabled={delta === 0 || isPending}
               onClick={handleAdjust}
             >
-              {submitting ? 'Saving...' : 'Save adjustment'}
+              {isPending ? 'Saving...' : 'Save adjustment'}
             </Button>
           </div>
         </Dialog>

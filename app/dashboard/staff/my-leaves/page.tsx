@@ -1,10 +1,19 @@
-'use client';
-
-import { useAuth } from '@/components/providers/auth-provider';
+import { auth } from '@/auth';
+import { Applications, Approvals } from '@/lib/db';
 import { MyLeavesClient } from './my-leaves-client';
+import type { LeaveApproval, LeaveApplicationWithRelations } from '@/types';
 
-export default function MyLeavesPage() {
-  const { currentUser, ready } = useAuth();
-  if (!ready || !currentUser) return null;
-  return <MyLeavesClient userId={currentUser.id} />;
+export default async function MyLeavesPage() {
+  const session = await auth();
+  const userId = session?.user?.id ?? '';
+  const applications = await Applications.byUser(userId);
+  const approvalEntries = await Promise.all(
+    applications.map(async (application) => [
+      application.id,
+      await Approvals.byApplication(application.id),
+    ] as const)
+  );
+  const approvalsByApplication: Record<string, LeaveApproval[]> = Object.fromEntries(approvalEntries);
+
+  return <MyLeavesClient applications={applications} approvalsByApplication={approvalsByApplication} />;
 }

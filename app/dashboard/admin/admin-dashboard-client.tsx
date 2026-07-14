@@ -6,12 +6,12 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { RoleBadge } from '@/components/ui/badge';
 import { timeAgo } from '@/lib/utils';
 import { UsersRound, Building2, CalendarDays, CheckCircle } from 'lucide-react';
-import {
-  useApprovalRequests,
-  useDepartments,
-  useLeaveTypes,
-  useUsers,
-} from '@/lib/local/data-hooks';
+import type {
+  Department,
+  LeaveType,
+  User,
+  UserApprovalRequestWithRelations,
+} from '@/types';
 
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Administrator',
@@ -20,12 +20,17 @@ const ROLE_LABEL: Record<string, string> = {
   staff: 'Staff Member',
 };
 
-export function AdminDashboardClient() {
-  const pending = useApprovalRequests('pending');
-  const allUsers = useUsers();
-  const depts = useDepartments();
-  const leaveTypes = useLeaveTypes();
-
+export function AdminDashboardClient({
+  pending,
+  allUsers,
+  departments,
+  leaveTypes,
+}: {
+  pending: UserApprovalRequestWithRelations[];
+  allUsers: User[];
+  departments: Department[];
+  leaveTypes: LeaveType[];
+}) {
   const stats = useMemo(
     () => [
       {
@@ -40,7 +45,7 @@ export function AdminDashboardClient() {
       },
       {
         label: 'Departments',
-        value: depts.length,
+        value: departments.length,
         icon: Building2,
       },
       {
@@ -49,7 +54,7 @@ export function AdminDashboardClient() {
         icon: CalendarDays,
       },
     ],
-    [pending, allUsers, depts, leaveTypes]
+    [pending, allUsers, departments, leaveTypes]
   );
 
   return (

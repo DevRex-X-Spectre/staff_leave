@@ -48,29 +48,31 @@ export function Dialog({
         onClose();
       }}
       className={cn(
-        'p-0 rounded-[var(--radius-xl)] overflow-hidden',
-        'text-[var(--text-primary)]',
-        'max-w-lg w-[calc(100vw-2rem)] sm:w-full mx-auto my-auto',
-        'shadow-lg'
+        'p-0 border-0 bg-transparent text-[var(--text-primary)]',
+        'w-[min(90vw,38rem)] max-w-[calc(100vw-1rem)]',
+        'mx-auto my-auto overflow-visible',
+        'shadow-none'
       )}
     >
       <div
         className={cn(
-          'bg-[var(--bg-card)] rounded-[var(--radius-xl)] p-4 sm:p-6',
+          'bg-[var(--bg-card)] rounded-[var(--radius-xl)] shadow-[var(--shadow-floating)]',
+          'border border-[var(--border-subtle)]',
           'max-h-[85vh] overflow-y-auto',
+          'p-4 sm:p-6',
           className
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between mb-4">
-          <div>
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="min-w-0 flex-1 text-center">
             {title && (
-              <h2 className="text-[18px] font-semibold text-[var(--text-primary)]">
+              <h2 className="text-[18px] font-semibold text-[var(--text-primary)] text-center">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">
+              <p className="text-[13px] text-[var(--text-secondary)] mt-0.5 text-center">
                 {description}
               </p>
             )}
@@ -80,7 +82,7 @@ export function Dialog({
             className={cn(
               'p-1.5 rounded-[var(--radius-md)] text-[var(--text-secondary)]',
               'hover:bg-[var(--bg-hover)] transition-colors',
-              'ml-4 shrink-0'
+              'shrink-0'
             )}
             aria-label="Close"
           >

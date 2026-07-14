@@ -5,30 +5,33 @@ import { PageHeader } from '@/components/ui/stat-card';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, FormField, Select } from '@/components/ui/input';
-import { Download, FileSpreadsheet, FileText, Users, AlertCircle } from 'lucide-react';
-import { useApplications, useDepartments } from '@/lib/local/data-hooks';
-import type { LeaveApplicationWithRelations, Department } from '@/types';
+import { FileSpreadsheet, FileText } from 'lucide-react';
+import type { Department, LeaveApplicationWithRelations } from '@/types';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
-export function RegistrarReportsClient() {
-  const apps = useApplications();
-  const departments = useDepartments();
+export function RegistrarReportsClient({
+  applications,
+  departments,
+}: {
+  applications: LeaveApplicationWithRelations[];
+  departments: Department[];
+}) {
   const [filterDept, setFilterDept] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
   const filtered = useMemo(() => {
-    return apps.filter((a) => {
+    return applications.filter((a) => {
       if (filterDept && a.department_id !== filterDept) return false;
       if (filterStatus && a.status !== filterStatus) return false;
       if (startDate && a.start_date < startDate) return false;
       if (endDate && a.end_date > endDate) return false;
       return true;
     });
-  }, [apps, filterDept, filterStatus, startDate, endDate]);
+  }, [applications, filterDept, filterStatus, startDate, endDate]);
 
   const exportExcel = () => {
     const rows = filtered.map((a) => ({

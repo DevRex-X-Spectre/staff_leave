@@ -1,8 +1,104 @@
 # NAUB LMS — Build Progress
 
-> Last updated: 2026-07-07
+> Last updated: 2026-07-14
 
-## Status: PHASE 13 COMPLETE — all "HR" / "HR Manager" replaced with "Registrar" end-to-end; all em dashes removed from codebase
+## Status: PHASE 8 COMPLETE — NextAuth + Supabase migration, clean ranked seed, FORM 1A casual-leave workflow, full approval breakdown, and approved-leave PDFs implemented. Runtime verification still requires a configured Supabase project.
+
+---
+
+## Phase 8 — FORM 1A casual leave + rank-aware approvals ✅ COMPLETE
+- [x] `supabase/migrations/003_form1a_and_rank.sql` — adds `users.rank`, application snapshots (`applicant_name`, `applicant_staff_id`, `applicant_rank`), casual-only `destination`, and approval-level `how_financed`.
+- [x] `User`, `LeaveApplication`, `LeaveApproval`, and NextAuth session types extended with rank and FORM 1A fields.
+- [x] Staff apply flow snapshots name, staff ID, and rank automatically; casual leave requires destination.
+- [x] HOD and Registrar approval dialogs show complete breakdown: applicant, Staff ID, rank, department, leave type, dates, days, reason, cover staff, destination, and rota conflicts.
+- [x] Casual approval records HOD financing (`Department`/`Applicant`) and Registrar financing (`University`/`Applicant`).
+- [x] Approved leave PDF download added to Staff history and Registrar all-applications. Casual leaves render FORM 1A; other leave types render an approval letter.
+- [x] Admin staff creation requires rank and shows rank in the staff table.
+- [x] `scripts/seed.ts` now removes deterministic mock transactions and seeds only ranked users, departments, leave types, entitlements, and credentials; senior/junior non-academic levels are represented.
+
+### Verification
+- [x] `npx tsc --noEmit` clean.
+- [x] `npm run build` green (29 routes). Only existing Cal Sans font fallback warning remains.
+- [ ] Apply migrations 001 + 002 + 003 to a configured Supabase project.
+- [ ] Run `npm run seed` with real Supabase credentials and drive the full staff → HOD → Registrar flow.
+
+---
+
+## Phase 7 — Seed script + remove demo mode ✅ COMPLETE
+- [x] **`scripts/seed.ts`** — idempotent seed using deterministic UUIDs (upsert on PK; entitlements on `user_id,leave_type_id,year`); inserts departments, 7 leave types, 9 users, `user_credentials` (bcrypt hash of `NAUB@2026`), 15 grade-driven entitlements, 5 sample applications + 5 approvals, 1 rota + 2 slots, 4 notifications, 1 pending UAR. Handles the departments↔users circular FK by inserting departments with `hod_id=null` first, then back-filling HODs once users exist. Entitlement year is `new Date().getFullYear()` so balances always show for the current year.
+- [x] **`npm run seed`** script added; **`tsx` installed** as a dev dependency.
+- [x] **`.env.example` rewritten** — added `AUTH_SECRET` + `AUTH_TRUST_HOST`, dropped the `NEXT_PUBLIC_DEMO_MODE` copy.
+- [x] **`.env.local`** — generated `AUTH_SECRET` + `AUTH_TRUST_HOST=true`; removed `NEXT_PUBLIC_DEMO_MODE`.
+- [x] **`supabase/migrations/001_initial_schema.sql`** — removed the inline SQL seed block (departments/leave types); the TypeScript seed script now owns ALL seed data.
+- [x] **Deleted `lib/local/*`** (store, auth-store, data-hooks, seed, constants, entitlements, routes) — confirmed zero references remain in `app/`, `components/`, `lib/`, `scripts/`.
+- [x] **`README.md` rewritten** with real setup steps (env, migration order, `npm run seed`, seeded test accounts).
+
+## Phase 7 — Seed script + remove demo mode ✅ COMPLETE
+- [x] **`scripts/seed.ts`** — idempotent seed using deterministic UUIDs (upsert on PK; entitlements on `user_id,leave_type_id,year`); inserts departments, 7 leave types, 9 users, `user_credentials` (bcrypt hash of `NAUB@2026`), 15 grade-driven entitlements, 5 sample applications + 5 approvals, 1 rota + 2 slots, 4 notifications, 1 pending UAR. Handles the departments↔users circular FK by inserting departments with `hod_id=null` first, then back-filling HODs once users exist. Entitlement year is `new Date().getFullYear()` so balances always show for the current year.
+- [x] **`npm run seed`** script added; **`tsx`** installed as a dev dependency.
+- [x] **`.env.example`** rewritten — added `AUTH_SECRET` + `AUTH_TRUST_HOST`, dropped the `NEXT_PUBLIC_DEMO_MODE` copy.
+- [x] **`.env.local`** — generated `AUTH_SECRET` + `AUTH_TRUST_HOST=true`; removed `NEXT_PUBLIC_DEMO_MODE`.
+- [x] **`supabase/migrations/001_initial_schema.sql`** — removed the inline SQL seed block (departments/leave types); the TypeScript seed script now owns ALL seed data.
+- [x] **Deleted `lib/local/*`** (store, auth-store, data-hooks, seed, constants, entitlements, routes) — confirmed zero references remain in `app/`, `components/`, `lib/`, `scripts/`.
+- [x] **`README.md`** rewritten with real setup steps (env, migration order, `npm run seed`, seeded test accounts).
+
+### Verification
+- [x] `npm run build` green — 29 routes; all `/dashboard/*` are `ƒ` (Dynamic); proxy detected.
+- [x] `npx tsc --noEmit` clean.
+- [x] `grep "@/lib/local" app components lib scripts` → **0** references.
+- [x] `lib/local/` directory removed; `lib/` now contains only `authz.ts`, `constants.ts`, `db/`, `email.ts`, `email/`, `entitlements.ts`, `supabase/`, `utils.ts`.
+
+### To run end-to-end (your steps)
+1. Create a Supabase project; paste URL + anon key + service role key into `.env.local`.
+2. Run `001_initial_schema.sql` then `002_nextauth_schema.sql` in the Supabase SQL editor.
+3. `npm run seed` → `npm run dev` → sign in with `NAUB/ADM/SN001` / `NAUB@2026`.
+
+---
+
+## Phase 0-2 — NextAuth + Supabase foundation ✅ COMPLETE
+- [x] Deps: `next-auth@beta`, `bcryptjs`, `@types/bcryptjs` installed
+- [x] `auth.ts` (Node) + `auth.config.ts` (edge-safe) — Credentials provider authenticates by **staff_id + bcrypt-hashed password** (looked up in `public.user_credentials`); JWT strategy; role/staff_id/staff_type/staff_grade/department_id/is_approved stashed on the token and surfaced on `session.user`
+- [x] `app/api/auth/[...nextauth]/route.ts` mounts the handlers
+- [x] `types/next-auth.d.ts` augments Session/User/JWT with the NAUB fields
+- [x] `supabase/migrations/001_initial_schema.sql` + `002_nextauth_schema.sql` — `public.users.id` is now a plain app uuid (no `auth.users` FK), RLS disabled, `public.user_credentials` table added, `set_updated_at` triggers retained
+
+## Phase 3 — Auth UI cutover ✅ COMPLETE
+- [x] `app/(auth)/login/page.tsx` — NextAuth `signIn('credentials', …)`; quick-login buttons for the seeded accounts; wrapped in `<Suspense>` so it prerenders statically (useSearchParams requirement)
+- [x] `proxy.ts` (was `middleware.ts`) — NextAuth `authorized` callback routes unauthenticated -> `/login?redirect=...` and logged-in users on `/` or `/login` -> their role dashboard. **Next.js 16 renamed `middleware` to `proxy`**; the auth handler is `const { auth: authHandler } = NextAuth(authConfig)` then `export { authHandler as proxy }` (a destructured `export const { auth: proxy }` is NOT recognised by Next's proxy-file static analysis)
+- [x] `app/dashboard/layout.tsx` — async Server Component; `await auth()`, redirect to `/login` if unauthenticated and `/pending-approval` if `!isApproved`; fetches department + notifications + unread count via the DAL and passes them to `DashboardShell`
+- [x] `app/dashboard/profile/*` — change-password is the `changePasswordAction` Server Action (bcrypt-verify old, bcrypt-hash new, update `user_credentials`)
+- [x] `components/providers/session-provider.tsx` — wraps the app in NextAuth `<SessionProvider>` so client islands can `useSession()`. Old `AuthProvider`/`DataProvider` deleted.
+
+## Phase 4 — Data Access Layer (DAL) ✅ COMPLETE
+- [x] `lib/db/client.ts` — server-only Supabase **service-role** client (`'server-only'` guard so it can't ship to the browser)
+- [x] `lib/db/index.ts` — async repo objects mirroring the old localStorage API: `Users`, `Credentials`, `Departments`, `LeaveTypes`, `Entitlements`, `Applications` (with `leaveBalances`, `byDepartment`, `byDepartmentAndStatus`, `byStatus`, `byUser`, hydrated relation selects), `Approvals`, `Rotas`, `Slots`, `Notifications`, `UAR`
+- [x] `lib/entitlements.ts` — shared, server-only: `annualLeaveDays`, `provisionEntitlementsForUser`, `resyncAnnualEntitlement` (grade-driven: academic=30, non-academic senior=30, junior=21)
+- [x] `lib/authz.ts` — `getSessionUser`, `requireUser`, `requireRole`, `requireSameDepartment`
+- [x] `lib/constants.ts` — `DEFAULT_PASSWORD = 'NAUB@2026'` (shared, demo-free)
+
+## Phase 5 — Server Actions ✅ COMPLETE
+`app/actions/` (each `await auth()`, authorises by role, mutates via the DAL, fans out notifications, and `revalidatePath`s):
+- [x] `leave.ts` — `applyLeaveAction` (authoritative rota-conflict detection, notifies HOD + cover staff), `cancelLeaveAction`
+- [x] `approvals.ts` — `hodDecisionAction` (HOD approve -> forward to Registrar / HOD reject -> terminal), `registrarDecisionAction` (final approve deducts entitlement + notifies applicant + HOD)
+- [x] `admin.ts` — `approveUserAction` (auto-provisions entitlements), `rejectUserAction`, `createStaffAction` (insert user + bcrypt default password + provision entitlements), `updateStaffRoleAction`, `updateStaffCategoryAction` (re-syncs annual), `toggleStaffActiveAction`, `adjustEntitlementAction`, plus department CRUD (`createDepartmentAction`, `deleteDepartmentAction`) and leave-type CRUD (`createLeaveTypeAction`, `toggleLeaveTypeAction`)
+- [x] `rota.ts` — `publishRotaAction` (inserts rota + all slots + notifies dept staff), `addRotaSlotAction`, `removeRotaSlotAction`
+- [x] `notifications.ts` — `markNotificationReadAction`, `markAllNotificationsReadAction`
+- [x] `auth.ts` — `changePasswordAction`
+
+## Phase 6 — Migrate pages to Server Components + client islands ✅ COMPLETE
+Every dashboard page is now an **async Server Component** that `await auth()` + fetches via the DAL and passes typed props to the existing `*-client.tsx` island; the islands keep their UI but receive data as props and call Server Actions via `useTransition` (no more `useAuth`/`useApplications`/localStorage).
+
+- [x] **Staff** — dashboard, apply (5-step wizard), my-leaves (cancel via action), rota (privacy-preserving calendar)
+- [x] **HOD** — dashboard, requests (`hodDecisionAction`), all-requests, calendar, rota (publish rota + slots via `publishRotaAction`)
+- [x] **Registrar** — dashboard, requests (`registrarDecisionAction`), entitlements (`adjustEntitlementAction`), all-applications, reports (Excel/PDF export unchanged)
+- [x] **Admin** — dashboard, approvals (`approveUserAction`/`rejectUserAction`), staff (`createStaffAction`/role/category/grade/toggle actions), departments (CRUD actions), leave-types (CRUD actions), notifications
+- [x] **Shared chrome** — `DashboardShell`/`TopBar`/`Sidebar`/`NotificationBell` all driven by session-derived props + Server Actions
+
+### Verification
+- [x] **`npm run build` green** — 29 routes compile; all `/dashboard/*` routes are `ƒ` (Dynamic, server-rendered on demand); `/login`, `/register`, `/pending-approval` are `○` (Static); proxy detected.
+- [x] **Zero `@/lib/local` references** in `app/` and `components/` (`grep -r "@/lib/local" app components` -> 0).
+- [x] **Zero demo-hook usage** (`useAuth`, `useApplications`, `useLeaveBalances`, `useApprovalRequests`, …) in `app/` and `components/`.
+- [x] `middleware.ts` removed; `proxy.ts` present (required by Next.js 16 — `middleware.ts` now fails the build).
 
 ---
 

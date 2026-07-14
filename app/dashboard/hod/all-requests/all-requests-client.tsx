@@ -10,16 +10,15 @@ import type { LeaveApplicationWithRelations } from '@/types';
 import { FileText } from 'lucide-react';
 
 export function HodAllRequestsClient({
-  initialApplications,
+  applications,
 }: {
-  initialApplications: LeaveApplicationWithRelations[];
+  applications: LeaveApplicationWithRelations[];
 }) {
-  const [apps] = useState<LeaveApplicationWithRelations[]>(initialApplications);
   const [filterStatus, setFilterStatus] = useState('');
 
   const filtered = useMemo(
-    () => (filterStatus ? apps.filter((a) => a.status === filterStatus) : apps),
-    [filterStatus, apps]
+    () => (filterStatus ? applications.filter((a) => a.status === filterStatus) : applications),
+    [filterStatus, applications]
   );
 
   return (
