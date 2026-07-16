@@ -119,7 +119,7 @@ const leaveTypes = [
   { id: LT.sick, name: 'Sick Leave', applicable_to: 'both', max_days_academic: 14, max_days_non_academic: 14, requires_document: true, is_active: true, created_at: nowIso },
   { id: LT.casual, name: 'Casual Leave', applicable_to: 'both', max_days_academic: 7, max_days_non_academic: 7, requires_document: false, is_active: true, created_at: nowIso },
   { id: LT.maternity, name: 'Maternity Leave', applicable_to: 'non_academic', max_days_academic: null, max_days_non_academic: 90, requires_document: true, is_active: true, created_at: nowIso },
-  { id: LT.paternity, name: 'Paternity Leave', applicable_to: 'both', max_days_academic: 7, max_days_non_academic: 7, requires_document: false, is_active: true, created_at: nowIso },
+  { id: LT.paternity, name: 'Paternity Leave', applicable_to: 'both', max_days_academic: 7, max_days_non_academic: 7, requires_document: true, is_active: true, created_at: nowIso },
   { id: LT.study, name: 'Study Leave', applicable_to: 'academic', max_days_academic: 365, max_days_non_academic: null, requires_document: true, is_active: true, created_at: nowIso },
   { id: LT.compassionate, name: 'Compassionate Leave', applicable_to: 'both', max_days_academic: 7, max_days_non_academic: 7, requires_document: false, is_active: true, created_at: nowIso },
 ];

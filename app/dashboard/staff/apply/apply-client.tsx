@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input, FormField, Textarea } from '@/components/ui/input';
 import { cn, workingDaysInclusive } from '@/lib/utils';
 import { applyLeaveAction } from '@/app/actions/leave';
+import { documentLabelFor } from '@/lib/leave-docs';
 import type { Department, LeaveBalance, LeaveType, User } from '@/types';
 import { toast } from 'sonner';
 import {
@@ -20,6 +21,7 @@ import {
   CalendarDays,
   AlertTriangle,
   UserCheck,
+  FileText,
 } from 'lucide-react';
 
 const STEPS = ['Leave Type', 'Dates', 'Reason', 'Cover Staff', 'Review & Submit'];
@@ -64,6 +66,11 @@ export function ApplyLeaveClient({
 
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  // File state lives outside react-hook-form: Files can't round-trip through
+  // zod resolvers / form serialization cleanly, so we keep it as native state
+  // and append it to the FormData at submit time.
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [docFile, setDocFile] = useState<File | null>(null);
 
   const {
     register,
@@ -121,21 +128,28 @@ export function ApplyLeaveClient({
   const canNext =
     step === 0 ? !!leaveTypeId :
     step === 1 ? !!startDate && !!endDate && days > 0 :
-    step === 2 ? reason.length >= 5 && (!isCasual || destination.trim().length > 0) :
+    step === 2 ? reason.length >= 5 && (!isCasual || destination.trim().length > 0)
+                  && (!selectedType?.requires_document || !!docFile) :
     step === 3 ? !!coverStaffId :
     true;
 
   const onSubmit = async (data: ApplyValues) => {
+    if (selectedType?.requires_document && !docFile) {
+      toast.error('A supporting document is required for this leave type.');
+      return;
+    }
     setSubmitting(true);
     try {
-      const result = await applyLeaveAction({
-        leave_type_id: data.leave_type_id,
-        start_date: data.start_date,
-        end_date: data.end_date,
-        reason: data.reason,
-        destination: data.destination,
-        cover_staff_id: data.cover_staff_id,
-      });
+      const fd = new FormData();
+      fd.set('leave_type_id', data.leave_type_id);
+      fd.set('start_date', data.start_date);
+      fd.set('end_date', data.end_date);
+      fd.set('reason', data.reason);
+      fd.set('destination', data.destination ?? '');
+      fd.set('cover_staff_id', data.cover_staff_id);
+      if (docFile) fd.set('file', docFile);
+
+      const result = await applyLeaveAction(fd);
       if (result.ok) {
         toast.success('Leave application submitted!');
         router.push('/dashboard/staff/my-leaves');
@@ -143,7 +157,7 @@ export function ApplyLeaveClient({
         toast.error(result.message);
       }
     } catch (err) {
-      toast.error(String(err instanceof Error ? err.message : 'Submission failed'));
+      toast.error(err instanceof Error ? err.message : 'Submission failed');
     } finally {
       setSubmitting(false);
     }
@@ -295,10 +309,25 @@ export function ApplyLeaveClient({
               </FormField>
             )}
             {selectedType?.requires_document && (
-              <div className="mt-4 p-3 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)]">
-                <p className="text-[12px] text-[var(--warning)]">
-                  This leave type requires a supporting document. Please bring your document to the Registrar after approval.
+              <div className="mt-4">
+                <FormField label={`${documentLabelFor(selectedType.name)} (required)`}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,application/pdf,image/*"
+                    onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+                    className="block w-full text-[12px] text-[var(--text-primary)] file:mr-3 file:py-1.5 file:px-3 file:rounded-[var(--radius-md)] file:border-0 file:text-[12px] file:font-medium file:bg-[var(--bg-subtle)] file:text-[var(--text-primary)] hover:file:bg-[var(--bg-hover)]"
+                  />
+                </FormField>
+                <p className="mt-1.5 text-[11px] text-[var(--text-tertiary)]">
+                  PDF, PNG, JPG, WebP, DOC or DOCX. Max 10 MB.
                 </p>
+                {docFile && (
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-[var(--success)]">
+                    <FileText size={12} />
+                    {docFile.name}
+                  </p>
+                )}
               </div>
             )}
           </>
@@ -367,6 +396,9 @@ export function ApplyLeaveClient({
                 ...(isCasual ? [['Destination', destination] as [string, string]] : []),
                 ['Covering staff', selectedCover?.full_name ?? '-'],
                 ['Reason', reason],
+                ...(selectedType?.requires_document && docFile
+                  ? [['Document', `${documentLabelFor(selectedType.name)} — ${docFile.name}`] as [string, string]]
+                  : []),
               ].map(([label, value]) => (
                 <div key={label} className="flex items-start justify-between py-2.5 border-b border-[var(--border-subtle)] last:border-0">
                   <span className="text-[13px] text-[var(--text-secondary)]">{label}</span>

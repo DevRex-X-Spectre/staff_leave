@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { PageHeader } from '@/components/ui/stat-card';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,15 @@ import { EmptyState } from '@/components/ui/stat-card';
 import { formatDate } from '@/lib/utils';
 import { LeaveTracker } from '@/components/leave/leave-tracker';
 import { cancelLeaveAction } from '@/app/actions/leave';
+import {
+  deleteSupportingDocAction,
+  getSupportingDocUrlAction,
+  uploadSupportingDocAction,
+} from '@/app/actions/leave-docs';
+import { documentLabelFor } from '@/lib/leave-docs';
 import { downloadLeaveApprovalPdf } from '@/lib/pdf';
 import type { LeaveApproval, LeaveApplicationWithRelations } from '@/types';
-import { Calendar, Download } from 'lucide-react';
+import { Calendar, Download, FileText, Loader2, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function MyLeavesClient({
@@ -27,6 +33,10 @@ export function MyLeavesClient({
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const [docBusy, setDocBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const handleCancel = (id: string) => {
     setCancelling(id);
@@ -44,6 +54,44 @@ export function MyLeavesClient({
   };
 
   const selectedApp = applications.find((a) => a.id === selected) ?? null;
+
+  async function handleView(app: LeaveApplicationWithRelations) {
+    setDocBusy(true);
+    try {
+      const res = await getSupportingDocUrlAction(app.id);
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      window.open(res.url, '_blank', 'noopener,noreferrer');
+    } finally {
+      setDocBusy(false);
+    }
+  }
+
+  function handleReplace(app: LeaveApplicationWithRelations, file: File) {
+    setDocBusy(true);
+    const fd = new FormData();
+    fd.set('application_id', app.id);
+    fd.set('file', file);
+    startTransition(async () => {
+      const res = await uploadSupportingDocAction(fd);
+      if (res.ok) toast.success('Document replaced.');
+      else toast.error(res.message);
+      setDocBusy(false);
+    });
+  }
+
+  function handleDelete(app: LeaveApplicationWithRelations) {
+    setDocBusy(true);
+    startTransition(async () => {
+      const res = await deleteSupportingDocAction(app.id);
+      if (res.ok) toast.success('Document deleted.');
+      else toast.error(res.message);
+      setConfirmDelete(null);
+      setDocBusy(false);
+    });
+  }
 
   return (
     <div className="animate-fade-in">
@@ -187,10 +235,106 @@ export function MyLeavesClient({
               </p>
             </div>
 
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                Supporting document
+              </p>
+              {selectedApp.supporting_doc_url ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-subtle)] p-3">
+                    <FileText size={15} className="text-[var(--text-secondary)] shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-medium text-[var(--text-primary)] truncate">
+                        {documentLabelFor(selectedApp.leave_type?.name)}
+                      </p>
+                      <p className="text-[11px] text-[var(--text-tertiary)] truncate">
+                        {selectedApp.supporting_doc_name ?? 'Uploaded document'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleView(selectedApp)}
+                      disabled={docBusy}
+                    >
+                      {docBusy ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Download size={13} />
+                      )}
+                      View / Download
+                    </Button>
+                    {selectedApp.status === 'pending' && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => replaceInputRef.current?.click()}
+                          disabled={docBusy}
+                        >
+                          <Upload size={13} />
+                          Replace
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => setConfirmDelete(selectedApp.id)}
+                          disabled={docBusy}
+                        >
+                          <Trash2 size={13} />
+                          Delete
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  {/* Hidden file input — clicking Replace triggers it. Resetting
+                      e.target.value lets the user re-pick the same file. */}
+                  <input
+                    ref={replaceInputRef}
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,application/pdf,image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleReplace(selectedApp, f);
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
+              ) : selectedApp.leave_type?.requires_document ? (
+                <div className="p-3 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)]">
+                  <p className="text-[12px] text-[var(--warning)]">
+                    This leave type requires a document but none is attached yet.
+                    {selectedApp.status === 'pending'
+                      ? ' Use Replace below to attach one before the HOD reviews it.'
+                      : ''}
+                  </p>
+                  {selectedApp.status === 'pending' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => replaceInputRef.current?.click()}
+                      disabled={docBusy}
+                    >
+                      <Upload size={13} />
+                      Attach document
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[12px] text-[var(--text-tertiary)]">
+                  None required for this leave type.
+                </p>
+              )}
+            </div>
+
             {selectedApp.rota_conflict && (
               <div className="p-3 bg-[var(--warning-bg)] border border-[var(--warning)]/20 rounded-[var(--radius-md)]">
                 <p className="text-[12px] text-[var(--warning)]">
-                  âš ï¸ This application conflicts with the published departmental leave rota.
+                  This application conflicts with the published departmental leave rota.
                 </p>
               </div>
             )}
@@ -231,6 +375,22 @@ export function MyLeavesClient({
           confirmLabel="Cancel application"
           variant="danger"
           loading={cancelling === showCancel}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          open
+          onClose={() => setConfirmDelete(null)}
+          onConfirm={() => {
+            const app = applications.find((a) => a.id === confirmDelete);
+            if (app) handleDelete(app);
+          }}
+          title="Delete the supporting document?"
+          description="The document will be removed from storage and can be re-uploaded while the application is pending."
+          confirmLabel="Delete document"
+          variant="danger"
+          loading={docBusy}
         />
       )}
     </div>

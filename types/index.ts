@@ -93,7 +93,12 @@ export type LeaveApplication = {
   end_date: string;
   total_days: number;
   reason: string;
+  /** Storage path (in the private "leave-documents" bucket) of the uploaded
+   *  supporting document, or null when no document is attached. */
   supporting_doc_url: string | null;
+  /** Original uploaded filename, for display/download label only. Null when
+   *  no document is attached. */
+  supporting_doc_name: string | null;
   status: LeaveStatus;
   rota_conflict: boolean;
   /** Staff nominated to cover the applicant's duties during this leave. */
