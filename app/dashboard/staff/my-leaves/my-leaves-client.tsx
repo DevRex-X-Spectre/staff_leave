@@ -55,6 +55,14 @@ export function MyLeavesClient({
 
   const selectedApp = applications.find((a) => a.id === selected) ?? null;
 
+  async function handleDownloadPdf(app: LeaveApplicationWithRelations, approvals: LeaveApproval[]) {
+    try {
+      await downloadLeaveApprovalPdf(app, approvals);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not create PDF.');
+    }
+  }
+
   async function handleView(app: LeaveApplicationWithRelations) {
     setDocBusy(true);
     try {
@@ -166,11 +174,7 @@ export function MyLeavesClient({
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              try {
-                                downloadLeaveApprovalPdf(app, approvalsByApplication[app.id] ?? []);
-                              } catch (error) {
-                                toast.error(error instanceof Error ? error.message : 'Could not create PDF.');
-                              }
+                              void handleDownloadPdf(app, approvalsByApplication[app.id] ?? []);
                             }}
                           >
                             <Download size={13} />
@@ -349,11 +353,7 @@ export function MyLeavesClient({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    try {
-                      downloadLeaveApprovalPdf(selectedApp, approvalsByApplication[selectedApp.id] ?? []);
-                    } catch (error) {
-                      toast.error(error instanceof Error ? error.message : 'Could not create PDF.');
-                    }
+                    void handleDownloadPdf(selectedApp, approvalsByApplication[selectedApp.id] ?? []);
                   }}
                 >
                   <Download size={14} />

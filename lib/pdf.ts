@@ -19,8 +19,80 @@ declare module 'jspdf' {
 applyPlugin(jsPDF);
 
 const PAGE_WIDTH = 210;
+const PAGE_HEIGHT = 297;
 const LEFT = 18;
 const RIGHT = PAGE_WIDTH - LEFT;
+
+const LOGO_URL = '/naub-logo.png';
+const HEADER_LOGO_MM = 20; // header size (square)
+const HEADER_LOGO_TOP_MM = 6; // distance from top edge
+const WATERMARK_SIZE_MM = 130; // faint watermark behind content
+
+// ---------------------------------------------------------------------------
+// Logo loading. jsPDF.addImage needs either an HTMLImageElement or a data URL.
+// We cache the result so we only fetch + decode the PNG once per page session.
+// ---------------------------------------------------------------------------
+let logoCache: Promise<{ dataUrl: string; width: number; height: number }> | null = null;
+
+function loadLogo(): Promise<{ dataUrl: string; width: number; height: number }> {
+  if (logoCache) return logoCache;
+  logoCache = new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      // Round to even dims so jsPDF's PNG encoder is happy.
+      const w = Math.round(img.naturalWidth / 2) * 2;
+      const h = Math.round(img.naturalHeight / 2) * 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Could not get canvas context for logo.'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      // toDataURL never taints because the image was loaded crossOrigin=anonymous.
+      resolve({ dataUrl: canvas.toDataURL('image/png'), width: w, height: h });
+    };
+    img.onerror = () => reject(new Error('Could not load ' + LOGO_URL));
+    img.src = LOGO_URL;
+  });
+  return logoCache;
+}
+
+/** Place the centered header logo at the top of the FIRST page only. */
+function addHeaderLogo(doc: jsPDF, dataUrl: string, w: number, h: number) {
+  const drawW = HEADER_LOGO_MM;
+  const drawH = HEADER_LOGO_MM * (h / w); // preserve aspect ratio
+  const x = (PAGE_WIDTH - drawW) / 2;
+  doc.addImage(dataUrl, 'PNG', x, HEADER_LOGO_TOP_MM, drawW, drawH, undefined, 'FAST');
+  return HEADER_LOGO_TOP_MM + drawH;
+}
+
+interface JspdfGStateCtor {
+  new (opts: { opacity: number }): unknown;
+}
+
+/** Place a faint, large, centered watermark behind the page content. */
+function addWatermark(doc: jsPDF, dataUrl: string, w: number, h: number) {
+  const drawSize = WATERMARK_SIZE_MM;
+  const drawH = WATERMARK_SIZE_MM * (h / w);
+  const x = (PAGE_WIDTH - drawSize) / 2;
+  const y = (PAGE_HEIGHT - drawH) / 2;
+  // jsPDF 4.x exposes GState globally; cast through unknown because the bundled
+  // type defs don't include it.
+  const GState = (doc as unknown as { GState?: JspdfGStateCtor }).GState
+    ?? ((jsPDF as unknown as { GState?: JspdfGStateCtor }).GState);
+  if (GState) {
+    // setGState is fluent at runtime; the type defs omit it, so cast.
+    (doc as unknown as { setGState: (s: unknown) => void }).setGState(new GState({ opacity: 0.06 }));
+  }
+  doc.addImage(dataUrl, 'PNG', x, y, drawSize, drawH, undefined, 'FAST');
+  if (GState) {
+    (doc as unknown as { setGState: (s: unknown) => void }).setGState(new GState({ opacity: 1 }));
+  }
+}
 
 function valueOrLine(value: string | null | undefined): string {
   return value?.trim() || '____________________________';
@@ -72,10 +144,10 @@ function writeFormLine(doc: jsPDF, y: number, number: string, label: string, val
   return bottom + 7;
 }
 
-function addForm1A(doc: jsPDF, application: LeaveApplicationWithRelations, approvals: LeaveApproval[]) {
+function addForm1A(doc: jsPDF, application: LeaveApplicationWithRelations, approvals: LeaveApproval[], headerHeight: number) {
   const hod = approvalFor(approvals, 'hod');
   const registrar = approvalFor(approvals, 'hr_manager');
-  let y = 15;
+  let y = headerHeight + 4;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
@@ -143,9 +215,9 @@ function addForm1A(doc: jsPDF, application: LeaveApplicationWithRelations, appro
   doc.text('Copy to: VC     Bursary     Dean     HOD', LEFT, y);
 }
 
-function addApprovalLetter(doc: jsPDF, application: LeaveApplicationWithRelations, approvals: LeaveApproval[]) {
+function addApprovalLetter(doc: jsPDF, application: LeaveApplicationWithRelations, approvals: LeaveApproval[], headerHeight: number) {
   const registrar = approvalFor(approvals, 'hr_manager');
-  let y = 22;
+  let y = headerHeight + 8;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
@@ -195,16 +267,36 @@ function addApprovalLetter(doc: jsPDF, application: LeaveApplicationWithRelation
   doc.text('Nigerian Army University Biu', RIGHT, y, { align: 'right' });
 }
 
-export function downloadLeaveApprovalPdf(
+export async function downloadLeaveApprovalPdf(
   application: LeaveApplicationWithRelations,
   approvals: LeaveApproval[] = []
 ) {
   if (application.status !== 'approved') {
     throw new Error('Only fully approved leave applications can be downloaded.');
   }
+
+  const logo = await loadLogo();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  if (isCasual(application)) addForm1A(doc, application, approvals);
-  else addApprovalLetter(doc, application, approvals);
+
+  // Step 1: lay down the watermark first on every page. addWatermark draws
+  // it centered with low opacity on the current page; for a single-page
+  // document (the common case here) this is enough. We re-add it on any
+  // overflow page below.
+  addWatermark(doc, logo.dataUrl, logo.width, logo.height);
+
+  // Step 2: header logo + content.
+  const headerBottom = addHeaderLogo(doc, logo.dataUrl, logo.width, logo.height);
+  if (isCasual(application)) addForm1A(doc, application, approvals, headerBottom);
+  else addApprovalLetter(doc, application, approvals, headerBottom);
+
+  // Step 3: if jsPDF created any overflow pages, add the watermark to each.
+  // (Header logo is only on page 1 by design.)
+  const pageCount = doc.getNumberOfPages();
+  for (let p = 2; p <= pageCount; p++) {
+    doc.setPage(p);
+    addWatermark(doc, logo.dataUrl, logo.width, logo.height);
+  }
+
   const safeStaffId = applicantStaffId(application).replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '');
   doc.save(`naub-${isCasual(application) ? 'form-1a' : 'leave-approval'}-${safeStaffId || application.id}.pdf`);
 }

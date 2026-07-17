@@ -103,11 +103,13 @@ export function RegistrarAllApplicationsClient({
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            try {
-                              downloadLeaveApprovalPdf(application, approvalsByApplication[application.id] ?? []);
-                            } catch (error) {
-                              toast.error(error instanceof Error ? error.message : 'Could not create PDF.');
-                            }
+                            void (async () => {
+                              try {
+                                await downloadLeaveApprovalPdf(application, approvalsByApplication[application.id] ?? []);
+                              } catch (error) {
+                                toast.error(error instanceof Error ? error.message : 'Could not create PDF.');
+                              }
+                            })();
                           }}
                         >
                           <Download size={13} />
