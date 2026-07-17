@@ -9,7 +9,10 @@ import { FileSpreadsheet, FileText } from 'lucide-react';
 import type { Department, LeaveApplicationWithRelations } from '@/types';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+// jspdf-autotable@5 is a standalone plugin that must be explicitly attached
+// to the jsPDF class (it no longer auto-registers itself in jspdf@4).
+import { applyPlugin } from 'jspdf-autotable';
+applyPlugin(jsPDF);
 
 export function RegistrarReportsClient({
   applications,
@@ -66,7 +69,6 @@ export function RegistrarReportsClient({
       String(a.total_days),
       a.status,
     ]);
-    // @ts-expect-error - autotable extension type
     doc.autoTable({
       head: [['Staff', 'Department', 'Leave Type', 'Start', 'End', 'Days', 'Status']],
       body: rows,

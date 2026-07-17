@@ -1,8 +1,22 @@
 'use client';
 
 import { jsPDF } from 'jspdf';
+// jspdf-autotable@5 is a standalone plugin — it must be explicitly attached
+// to the jsPDF class (in jspdf@4 the plugin no longer auto-registers itself).
+// applyPlugin() monkey-patches jsPDF.prototype so `doc.autoTable(...)` works.
+import { applyPlugin } from 'jspdf-autotable';
 import type { LeaveApplicationWithRelations, LeaveApproval } from '@/types';
 import { formatDate } from '@/lib/utils';
+
+// Reflect the runtime monkey-patch in the type system so call sites stay clean.
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: Record<string, unknown>) => void;
+    lastAutoTable?: { finalY: number };
+  }
+}
+
+applyPlugin(jsPDF);
 
 const PAGE_WIDTH = 210;
 const LEFT = 18;
@@ -169,9 +183,7 @@ function addApprovalLetter(doc: jsPDF, application: LeaveApplicationWithRelation
     ['Covering staff', application.cover_staff?.full_name ?? 'Not specified'],
   ];
   if (application.destination) details.splice(3, 0, ['Destination', application.destination]);
-  // @ts-expect-error jspdf-autotable augments jsPDF at runtime.
   doc.autoTable({ head: [['Detail', 'Approved information']], body: details, startY: y, theme: 'grid', styles: { fontSize: 9, cellPadding: 2 } });
-  // @ts-expect-error jspdf-autotable augments jsPDF at runtime.
   y = (doc.lastAutoTable?.finalY ?? y) + 14;
 
   doc.text(`Registrar's comment: ${registrar?.comment || 'Approved.'}`, LEFT, y, { maxWidth: RIGHT - LEFT });
